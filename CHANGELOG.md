@@ -11,6 +11,7 @@
 - feat(webview): Add dark mode support for background and buttons in the map (#5240 - @olsoybakk and @swiffer)
 - fix(webview): Prevent rounding of map tiles via Bulma CSS (#5265 - @swiffer)
 - perf: ensure BRIN indexes don't degrade over time (#5276 - @swiffer)
+- feat: use Grafana 12.4.3 (#5280 - @swiffer)
 
 #### Build, CI, internal
 
