@@ -175,6 +175,22 @@ defmodule TeslaMateWeb.CarLive.Summary do
     "#{Float.round(bar, 1)} Bar"
   end
 
+  def format_temp(nil, _unit), do: "—"
+
+  def format_temp(c, :F) when is_number(c) do
+    "#{Convert.celsius_to_fahrenheit(c, 1)} °F"
+  end
+
+  def format_temp(c, _unit) when is_number(c) do
+    "#{c} °C"
+  end
+
+  def format_duration(pairs) when is_list(pairs) do
+    pairs |> Enum.map(&to_string/1) |> Enum.join(", ")
+  end
+
+  def format_duration(_), do: ""
+
   defp translate_state(:start), do: ""
   defp translate_state(:driving), do: gettext("driving")
   defp translate_state(:charging), do: gettext("charging")

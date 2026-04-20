@@ -103,5 +103,52 @@
         .wd-precip.wd-dry { color: rgba(204, 204, 220, 0.3); }
       }
     }
+
+    .state-pill {
+      background: rgba(204, 204, 220, 0.08);
+      color: rgba(204, 204, 220, 0.8);
+      &.state-online   { background: hsla(141, 53%, 50%, 0.18); color: hsl(141, 53%, 70%); }
+      &.state-driving  { background: hsla(210, 80%, 55%, 0.2); color: hsl(210, 80%, 72%); }
+      &.state-charging { background: hsla(36,  90%, 55%, 0.22); color: hsl(36,  90%, 70%); }
+      &.state-updating { background: hsla(340, 70%, 55%, 0.2); color: hsl(340, 70%, 72%); }
+      &.state-asleep,
+      &.state-suspended { background: hsla(260, 40%, 60%, 0.2); color: hsl(260, 40%, 75%); }
+      &.state-offline { background: rgba(204, 204, 220, 0.1); color: rgba(204, 204, 220, 0.55); }
+    }
+
+    .driving-panel {
+      background: hsla(210, 80%, 55%, 0.12);
+      .drv-speed { color: hsl(210, 80%, 75%); }
+      .drv-unit { color: hsl(210, 50%, 65%); }
+      .icon { color: hsl(210, 70%, 65%); }
+    }
+
+    .charging-panel {
+      background: hsla(36, 90%, 55%, 0.1);
+      border-color: hsla(36, 90%, 55%, 0.22);
+      .charging-header { color: hsl(36, 80%, 70%); }
+      .ch-label { color: hsl(36, 40%, 65%); }
+      .ch-value { color: rgba(204, 204, 220, 0.9); }
+      .ch-unit { color: rgba(204, 204, 220, 0.55); }
+      .charging-scheduled {
+        border-top-color: hsla(36, 60%, 50%, 0.3);
+        color: hsl(36, 35%, 70%);
+      }
+    }
+
+    .env-strip {
+      color: rgba(204, 204, 220, 0.7);
+      .env-item {
+        .icon { color: rgba(204, 204, 220, 0.55); }
+        .env-label { color: rgba(204, 204, 220, 0.55); }
+        .env-value { color: rgba(204, 204, 220, 0.95); }
+      }
+    }
+
+    .version-footer {
+      color: rgba(204, 204, 220, 0.45);
+      a { color: rgba(204, 204, 220, 0.65); }
+      a:hover { color: rgb(110, 159, 255); }
+    }
   }
 }

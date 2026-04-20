@@ -208,6 +208,18 @@
       </div>
     </div>
 
+
+    <div class={"state-pill-row"}>
+      <div class={"state-pill state-#{@summary.state}"}>
+        <span class="state-dot"></span>
+        <span class="state-text"><%= @translate_state.(@summary.state) %></span>
+        <%= if @duration do %>
+          <span class="state-duration">
+            for <%= format_duration(@duration) %>
+          </span>
+        <% end %>
+      </div>
+    </div>
     <%= if not is_nil(@summary.battery_level) do %>
       <% lvl = @summary.usable_battery_level || @summary.battery_level %>
       <% raw_lvl = @summary.battery_level %>
@@ -314,6 +326,18 @@
             </div>
           </div>
         <% end %>
+        <%= unless is_nil(@summary.odometer) do %>
+          <div class="insight-card">
+            <div class="insight-label">Odometer</div>
+            <div class="insight-value">
+              <%= if @settings.unit_of_length == :mi do %>
+                <%= Convert.km_to_miles(@summary.odometer, 0) %> <span class="insight-unit">mi</span>
+              <% else %>
+                <%= round(@summary.odometer) %> <span class="insight-unit">km</span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
 
       <%= if @widget.last_drive do %>
@@ -375,154 +399,91 @@
       <% end %>
     </div>
 
+    <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
+      <div class="driving-panel">
+        <span class="icon"><i class="mdi mdi-speedometer"></i></span>
+        <span class="drv-speed"><%= @summary.speed %></span>
+        <span class="drv-unit"><%= if @settings.unit_of_length == :mi, do: "mph", else: "km/h" %></span>
+      </div>
+    <% end %>
+
+    <%= if @summary.state == :charging do %>
+      <div class="charging-panel">
+        <div class="charging-header">
+          <span class="icon"><i class="mdi mdi-lightning-bolt"></i></span>
+          <span>Charging</span>
+        </div>
+        <div class="charging-grid">
+          <%= unless is_nil(@summary.charger_power) do %>
+            <div class="ch-stat">
+              <div class="ch-label">Power</div>
+              <div class="ch-value"><%= @summary.charger_power %><span class="ch-unit">kW</span></div>
+            </div>
+          <% end %>
+          <%= unless is_nil(@summary.charge_energy_added) do %>
+            <div class="ch-stat">
+              <div class="ch-label">Added</div>
+              <div class="ch-value"><%= @summary.charge_energy_added %><span class="ch-unit">kWh</span></div>
+            </div>
+          <% end %>
+          <%= if not is_nil(@summary.time_to_full_charge) do %>
+            <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
+            <% finish_dt = Timex.add(Timex.now(), Timex.Duration.from_hours(@summary.time_to_full_charge)) |> Timex.local() %>
+            <% eta_str = Timex.format!(finish_dt, "%H:%M", :strftime) %>
+            <div class="ch-stat">
+              <div class="ch-label">Remaining</div>
+              <div class="ch-value ch-value-sm"><%= remaining_str %></div>
+            </div>
+            <div class="ch-stat">
+              <div class="ch-label">ETA</div>
+              <div class="ch-value"><%= eta_str %></div>
+            </div>
+          <% end %>
+        </div>
+        <%= if @summary.plugged_in and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
+          <div class="charging-scheduled">
+            <span class="icon"><i class="mdi mdi-clock-outline"></i></span>
+            Scheduled: <%= tag(:span,
+              data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
+              phx_hook: "LocalTime",
+              id: "scheduled_start_time_#{@car.id}"
+            ) %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= if (not is_nil(@summary.outside_temp) or not is_nil(@summary.inside_temp)) and (@summary.state not in [:asleep, :offline, :suspended] or DateTime.diff(DateTime.utc_now(), @summary.since) < 30*60) do %>
+      <div class="env-strip">
+        <%= unless is_nil(@summary.outside_temp) do %>
+          <span class="env-item">
+            <span class="icon"><i class="mdi mdi-thermometer"></i></span>
+            <span class="env-label">Outside</span>
+            <span class="env-value"><%= format_temp(@summary.outside_temp, @settings.unit_of_temperature) %></span>
+          </span>
+        <% end %>
+        <%= unless is_nil(@summary.inside_temp) do %>
+          <span class="env-item">
+            <span class="icon"><i class="mdi mdi-home-thermometer-outline"></i></span>
+            <span class="env-label">Inside</span>
+            <span class="env-value"><%= format_temp(@summary.inside_temp, @settings.unit_of_temperature) %></span>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= unless is_nil(@summary.version) do %>
+      <div class="version-footer">
+        <span class="vf-label">Firmware</span>
+        <%= link(@summary.version,
+          to: "https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes",
+          target: "_blank",
+          rel: "noopener noreferrer"
+        ) %>
+      </div>
+    <% end %>
+
     <div class="content">
-      <table class="table is-narrow is-fullwidth thead-transparent">
-        <thead>
-          <tr>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody style="font-variant-numeric: tabular-nums;">
-          <tr>
-            <td class="has-text-weight-medium"><%= gettext("Status") %></td>
-            <td>
-              <%= raw(
-                @translate_state.(@summary.state) <>
-                  unless is_nil(@duration) do
-                    " #{gettext("for")} " <>
-                      case @duration do
-                        [a, b] -> "#{a}<span class=\"duration-extended\">, #{b}</span>"
-                        [a] -> a
-                      end
-                  else
-                    ""
-                  end
-              ) %>
-            </td>
-          </tr>
-          <%= if @summary.state == :charging and not is_nil(@summary.time_to_full_charge) do %>
-            <% current_time = Timex.now()
-
-            finish_time =
-              Timex.add(current_time, Timex.Duration.from_hours(@summary.time_to_full_charge))
-
-            local_finish_time = Timex.local(finish_time)
-
-            formatted_finish_time =
-              Timex.format!(local_finish_time, "%Y-%m-%d %H:%M:%S", :strftime) %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Remaining Time") %></td>
-              <td>
-                <%= round(@summary.time_to_full_charge * 60 * 60)
-                |> Convert.sec_to_str()
-                |> Enum.reject(&String.ends_with?(&1, "s"))
-                |> Enum.join(", ") %>
-              </td>
-            </tr>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Expected Finish Time") %></td>
-              <td><%= formatted_finish_time %></td>
-            </tr>
-          <% end %>
-          <%# Range (preferred) row removed — in battery widget %>
-          <%# Range (est.) row removed %>
-          <%= if @summary.state == :charging do %>
-            <%= unless is_nil(@summary.charge_energy_added) do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Charged") %></td>
-                <td><%= @summary.charge_energy_added %> kWh</td>
-              </tr>
-            <% end %>
-            <%= unless is_nil(@summary.charger_power) do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Charger Power") %></td>
-                <td><%= @summary.charger_power %> kW</td>
-              </tr>
-            <% end %>
-          <% end %>
-
-          <%= if @summary.plugged_in do %>
-            <%= unless @summary.scheduled_charging_start_time in [nil, :unknown] do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Scheduled Charging") %></td>
-                <td>
-                  <%= tag(:span,
-                    data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
-                    phx_hook: "LocalTime",
-                    id: "scheduled_start_time_#{@car.id}"
-                  ) %>
-                </td>
-              </tr>
-            <% end %>
-            <%# Charge Limit row removed — in battery widget %>
-          <% end %>
-          <%# State of Charge row removed — in battery widget %>
-          <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Speed") %></td>
-              <td>
-                <%= if @settings.unit_of_length == :mi do
-                  "#{Convert.km_to_miles(@summary.speed, 0)} mph"
-                else
-                  "#{@summary.speed} km/h"
-                end %>
-              </td>
-            </tr>
-          <% end %>
-          <%= if @summary.state not in [:asleep, :offline, :suspended] or DateTime.diff(DateTime.utc_now(), @summary.since) < 30*60 do %>
-            <%= unless is_nil(@summary.outside_temp) do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Outside Temperature") %></td>
-                <td>
-                  <%= if @settings.unit_of_temperature == :F do
-                    "#{Convert.celsius_to_fahrenheit(@summary.outside_temp, 1)} °F"
-                  else
-                    "#{@summary.outside_temp} °C"
-                  end %>
-                </td>
-              </tr>
-            <% end %>
-            <%= unless is_nil(@summary.inside_temp) do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Inside Temperature") %></td>
-                <td>
-                  <%= if @settings.unit_of_temperature == :F do
-                    "#{Convert.celsius_to_fahrenheit(@summary.inside_temp, 1)} °F"
-                  else
-                    "#{@summary.inside_temp} °C"
-                  end %>
-                </td>
-              </tr>
-            <% end %>
-          <% end %>
-          <%= unless is_nil(@summary.odometer) do %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Mileage") %></td>
-              <td>
-                <%= if @settings.unit_of_length == :mi do
-                  "#{Convert.km_to_miles(@summary.odometer, 0)} mi"
-                else
-                  "#{round(@summary.odometer)} km"
-                end %>
-              </td>
-            </tr>
-          <% end %>
-          <%= unless is_nil(@summary.version) do %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Version") %></td>
-              <td>
-                <%= link(@summary.version,
-                  to:
-                    "https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes",
-                  target: "_blank",
-                  rel: "noopener noreferrer"
-                ) %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
       <%= cond do
         not is_nil(@error) ->
           link(@error,

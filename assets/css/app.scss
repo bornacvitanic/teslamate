@@ -405,6 +405,160 @@ nav.navbar {
     }
   }
 
+  .state-pill-row {
+    padding: 0 1rem 0.5rem;
+  }
+  .state-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: hsla(0, 0%, 0%, 0.05);
+
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: hsl(0, 0%, 55%);
+    }
+    .state-duration {
+      opacity: 0.75;
+      font-weight: 500;
+      text-transform: lowercase;
+    }
+    &.state-online   { background: hsla(141, 53%, 53%, 0.15); color: hsl(141, 53%, 28%); .state-dot { background: hsl(141, 53%, 53%); } }
+    &.state-driving  { background: hsla(210, 80%, 55%, 0.15); color: hsl(210, 80%, 35%); .state-dot { background: hsl(210, 80%, 55%); animation: state-pulse 1.2s ease-in-out infinite; } }
+    &.state-charging { background: hsla(36,  90%, 55%, 0.18); color: hsl(36,  90%, 32%); .state-dot { background: hsl(36,  90%, 55%); animation: state-pulse 1.2s ease-in-out infinite; } }
+    &.state-updating { background: hsla(340, 70%, 55%, 0.15); color: hsl(340, 70%, 38%); .state-dot { background: hsl(340, 70%, 55%); animation: state-pulse 1.2s ease-in-out infinite; } }
+    &.state-asleep,
+    &.state-suspended { background: hsla(260, 40%, 55%, 0.15); color: hsl(260, 40%, 40%); .state-dot { background: hsl(260, 40%, 55%); } }
+    &.state-offline { background: hsla(0, 0%, 60%, 0.15); color: hsl(0, 0%, 40%); .state-dot { background: hsl(0, 0%, 55%); } }
+    &.state-unavailable,
+    &.state-start { background: hsla(0, 0%, 60%, 0.15); color: hsl(0, 0%, 45%); }
+  }
+  @keyframes state-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+  .driving-panel {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    background: hsla(210, 80%, 55%, 0.08);
+    border-radius: 8px;
+    margin: 0 1rem 0.5rem;
+
+    .icon { font-size: 1.4rem; color: hsl(210, 80%, 45%); align-self: center; }
+    .drv-speed {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: hsl(210, 80%, 35%);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .drv-unit {
+      font-size: 0.95rem;
+      color: hsl(210, 50%, 45%);
+      font-weight: 500;
+    }
+  }
+
+  .charging-panel {
+    margin: 0 1rem 0.5rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 8px;
+    background: hsla(36, 90%, 55%, 0.08);
+    border: 1px solid hsla(36, 90%, 55%, 0.2);
+
+    .charging-header {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      color: hsl(36, 80%, 35%);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.4rem;
+      .icon { font-size: 1rem; }
+    }
+    .charging-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 0.4rem 0.6rem;
+    }
+    .ch-stat { display: flex; flex-direction: column; }
+    .ch-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: hsl(36, 30%, 40%);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .ch-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: hsl(0, 0%, 20%);
+      line-height: 1.1;
+    }
+    .ch-value-sm { font-size: 0.95rem; }
+    .ch-unit {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: hsl(0, 0%, 45%);
+      margin-left: 0.15rem;
+    }
+    .charging-scheduled {
+      margin-top: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px dashed hsla(36, 60%, 40%, 0.25);
+      font-size: 0.78rem;
+      color: hsl(36, 25%, 35%);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      .icon { font-size: 0.85rem; }
+    }
+  }
+
+  .env-strip {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: hsl(0, 0%, 35%);
+
+    .env-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-variant-numeric: tabular-nums;
+      .icon { color: hsl(0, 0%, 50%); font-size: 0.95rem; }
+      .env-label { color: hsl(0, 0%, 50%); }
+      .env-value { font-weight: 600; color: hsl(0, 0%, 20%); }
+    }
+  }
+
+  .version-footer {
+    padding: 0.5rem 1rem 0.65rem;
+    font-size: 0.75rem;
+    color: hsl(0, 0%, 55%);
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    .vf-label { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    a { color: hsl(0, 0%, 40%); text-decoration: underline; text-decoration-style: dotted; }
+    a:hover { color: hsl(210, 80%, 45%); }
+  }
+
   .weather-strip {
     padding: 0.5rem 1rem 0.75rem;
 
