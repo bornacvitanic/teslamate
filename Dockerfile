@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM elixir:1.19.5-otp-26 AS builder
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -61,10 +62,14 @@ RUN mkdir -p "$LOCALES/locales" && cd "$LOCALES/locales" \
     && curl -fsSLo en.json "https://raw.githubusercontent.com/elixir-cldr/cldr/v2.46.0/priv/cldr/locales/en.json" \
     && ls -la "$LOCALES/locales"
 
-RUN mix compile
+# BuildKit cache mount on _build/ lets Elixir skip unchanged modules between
+# builds — huge speedup for template/CSS-only iterations.
+RUN --mount=type=cache,target=/opt/app/_build,id=teslamate-build,sharing=locked \
+    mix compile
 
 COPY config/runtime.exs config/runtime.exs
-RUN SKIP_LOCALE_DOWNLOAD=true mix release --path /opt/built
+RUN --mount=type=cache,target=/opt/app/_build,id=teslamate-build,sharing=locked \
+    SKIP_LOCALE_DOWNLOAD=true mix release --path /opt/built
 
 ########################################################################
 
