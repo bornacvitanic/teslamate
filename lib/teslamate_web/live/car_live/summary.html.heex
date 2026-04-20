@@ -274,6 +274,107 @@
       </div>
     <% end %>
 
+    <%= if @widget do %>
+      <div class="insight-row">
+        <div class="insight-card">
+          <div class="insight-label">Today</div>
+          <div class="insight-value">
+            <%= @widget.today.km %> <span class="insight-unit">km</span>
+          </div>
+          <div class="insight-sub">
+            <%= @widget.today.trips %> <%= if @widget.today.trips == 1, do: "trip", else: "trips" %>
+            <%= if @widget.today.duration_min && @widget.today.duration_min > 0 do %>
+              · <%= @widget.today.duration_min %> min
+            <% end %>
+          </div>
+        </div>
+
+        <%= if @widget.days_since_drive != nil do %>
+          <div class="insight-card">
+            <div class="insight-label">Last drive</div>
+            <div class="insight-value">
+              <%= case @widget.days_since_drive do
+                0 -> "Today"
+                1 -> "Yesterday"
+                n -> "#{n}d ago"
+              end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @widget.days_since_charge != nil do %>
+          <div class="insight-card">
+            <div class="insight-label">Last charge</div>
+            <div class="insight-value">
+              <%= case @widget.days_since_charge do
+                0 -> "Today"
+                1 -> "Yesterday"
+                n -> "#{n}d ago"
+              end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%= if @widget.last_drive do %>
+        <div class="last-drive-card">
+          <div class="last-drive-header">
+            <span class="icon"><i class="mdi mdi-steering"></i></span>
+            <span>Last drive</span>
+          </div>
+          <div class="last-drive-route">
+            <span class="loc"><%= drive_origin_name(@widget.last_drive) %></span>
+            <span class="arrow">→</span>
+            <span class="loc"><%= drive_endpoint_name(@widget.last_drive) %></span>
+          </div>
+          <div class="last-drive-stats">
+            <%= if @widget.last_drive.distance do %>
+              <span><%= round(@widget.last_drive.distance) %> km</span>
+            <% end %>
+            <%= if @widget.last_drive.duration_min do %>
+              <span>·</span>
+              <span><%= @widget.last_drive.duration_min %> min</span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <div class="weather-strip">
+      <div class="weather-title">
+        <span class="icon"><i class="mdi mdi-weather-partly-cloudy"></i></span>
+        <span>7-day forecast</span>
+      </div>
+      <%= case @weather do %>
+        <% {:ok, days} -> %>
+          <div class="weather-days">
+            <%= for day <- days do %>
+              <% {icon_cls, label} = TeslaMateWeb.Widgets.Weather.icon_and_label(day.code) %>
+              <div class="weather-day" title={label}>
+                <div class="wd-name"><%= Calendar.strftime(day.date, "%a") %></div>
+                <span class={"icon mdi #{icon_cls}"}></span>
+                <div class="wd-temps">
+                  <span class="wd-tmax"><%= round(day.t_max) %>°</span>
+                  <span class="wd-tmin"><%= round(day.t_min) %>°</span>
+                </div>
+                <%= if day.precip_mm && day.precip_mm >= 0.1 do %>
+                  <div class="wd-precip">
+                    <span class="icon is-small"><i class="mdi mdi-water"></i></span>
+                    <%= :erlang.float_to_binary(day.precip_mm * 1.0, decimals: 1) %>mm
+                  </div>
+                <% else %>
+                  <div class="wd-precip wd-dry">—</div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% :loading -> %>
+          <div class="weather-status">Loading forecast…</div>
+        <% :error -> %>
+          <div class="weather-status is-offline">Forecast unavailable</div>
+      <% end %>
+    </div>
+
     <div class="content">
       <table class="table is-narrow is-fullwidth thead-transparent">
         <thead>

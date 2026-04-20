@@ -3,17 +3,36 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
   use Gettext, backend: TeslaMateWeb.Gettext
 
+  import Ecto.Query
+
   alias TeslaMate.Vehicles.Vehicle.Summary
   alias TeslaMate.Vehicles.Vehicle
-  alias TeslaMate.{Vehicles, Convert}
+  alias TeslaMate.Log.{Drive, ChargingProcess}
+  alias TeslaMate.{Vehicles, Convert, Repo}
+  alias TeslaMateWeb.Widgets.Weather
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
+  # Where to evaluate "today" when the client timezone is unknown.
+  # Fallback only — we use the browser-reported tz when available.
+  @fallback_tz "Europe/Zagreb"
+  @widget_refresh_ms :timer.minutes(5)
+  @weather_refresh_ms :timer.hours(3)
+  @weather_retry_ms :timer.minutes(15)
+
   @impl true
   def mount(_params, %{"summary" => %Summary{car: car} = summary} = session, socket) do
+    tz =
+      if connected?(socket) do
+        get_connect_params(socket)["tz"] || @fallback_tz
+      else
+        @fallback_tz
+      end
+
     if connected?(socket) do
       send(self(), :update_duration)
       send(self(), {:status, Vehicle.busy?(car.id)})
+      send(self(), :refresh_widget_data)
 
       :ok = Vehicles.subscribe_to_summary(car.id)
       :ok = Vehicles.subscribe_to_fetch(car.id)
@@ -30,10 +49,22 @@ defmodule TeslaMateWeb.CarLive.Summary do
       duration: humanize_duration(summary.since),
       error: nil,
       error_timeout: nil,
-      loading: false
+      loading: false,
+      tz: tz,
+      widget: nil,
+      weather: :loading
     }
 
-    {:ok, assign(socket, assigns)}
+    socket = assign(socket, assigns)
+
+    socket =
+      if connected?(socket) and is_number(summary.latitude) and is_number(summary.longitude) do
+        start_weather_fetch(socket, summary.latitude, summary.longitude)
+      else
+        socket
+      end
+
+    {:ok, socket}
   end
 
   @impl true
@@ -163,4 +194,145 @@ defmodule TeslaMateWeb.CarLive.Summary do
       dur -> dur |> Convert.sec_to_str()
     end
   end
+
+  # ---- widget data (Phase 2b-i) ---------------------------------------------
+
+  def handle_info(:refresh_widget_data, socket) do
+    Process.send_after(self(), :refresh_widget_data, @widget_refresh_ms)
+
+    data =
+      try do
+        fetch_widget_data(socket.assigns.car.id, socket.assigns.tz)
+      rescue
+        _ -> nil
+      end
+
+    {:noreply, assign(socket, widget: data)}
+  end
+
+  def handle_info(:refresh_weather, socket) do
+    lat = socket.assigns.summary.latitude
+    lng = socket.assigns.summary.longitude
+
+    socket =
+      if is_number(lat) and is_number(lng) do
+        start_weather_fetch(socket, lat, lng)
+      else
+        assign(socket, weather: :error)
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:weather, {:ok, {:ok, days}}, socket) do
+    Process.send_after(self(), :refresh_weather, @weather_refresh_ms)
+    {:noreply, assign(socket, weather: {:ok, days})}
+  end
+
+  def handle_async(:weather, _other, socket) do
+    Process.send_after(self(), :refresh_weather, @weather_retry_ms)
+    {:noreply, assign(socket, weather: :error)}
+  end
+
+  defp start_weather_fetch(socket, lat, lng) do
+    start_async(socket, :weather, fn -> Weather.forecast(lat, lng) end)
+  end
+
+  defp fetch_widget_data(car_id, tz) do
+    {today_start_utc, now} = today_window(tz)
+
+    today_raw =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id and d.start_date >= ^today_start_utc,
+          select: %{
+            km: sum(d.distance),
+            trips: count(d.id),
+            duration_min: sum(d.duration_min)
+          }
+      )
+
+    today = %{
+      km: to_int(today_raw && today_raw.km),
+      trips: (today_raw && today_raw.trips) || 0,
+      duration_min: to_int(today_raw && today_raw.duration_min)
+    }
+
+    last_drive =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id and not is_nil(d.end_date),
+          order_by: [desc: d.start_date],
+          limit: 1,
+          preload: [:start_geofence, :end_geofence, :start_address, :end_address]
+      )
+
+    last_drive_at =
+      Repo.one(from d in Drive, where: d.car_id == ^car_id, select: max(d.start_date))
+
+    last_charge_at =
+      Repo.one(
+        from c in ChargingProcess, where: c.car_id == ^car_id, select: max(c.start_date)
+      )
+
+    %{
+      today: today,
+      last_drive: last_drive,
+      days_since_drive: days_since(last_drive_at, now),
+      days_since_charge: days_since(last_charge_at, now),
+      last_drive_at: last_drive_at,
+      last_charge_at: last_charge_at
+    }
+  end
+
+  # Coerce Ecto aggregate results (Decimal | float | integer | nil) to integer
+  defp to_int(nil), do: 0
+  defp to_int(%Decimal{} = d), do: d |> Decimal.round(0) |> Decimal.to_integer()
+  defp to_int(n) when is_float(n), do: round(n)
+  defp to_int(n) when is_integer(n), do: n
+
+  defp today_window(tz) do
+    tz = if tz_valid?(tz), do: tz, else: @fallback_tz
+    now_local = DateTime.now!(tz)
+    today_local = DateTime.new!(DateTime.to_date(now_local), ~T[00:00:00], tz)
+    {DateTime.shift_zone!(today_local, "Etc/UTC"), DateTime.utc_now()}
+  end
+
+  defp tz_valid?(tz) when is_binary(tz) do
+    case DateTime.now(tz) do
+      {:ok, _} -> true
+      _ -> false
+    end
+  end
+
+  defp tz_valid?(_), do: false
+
+  defp days_since(nil, _now), do: nil
+
+  defp days_since(%DateTime{} = ts, now) do
+    div(DateTime.diff(now, ts, :second), 86_400)
+  end
+
+  def drive_endpoint_name(drive) do
+    cond do
+      drive == nil -> nil
+      not is_nil(drive.end_geofence) -> drive.end_geofence.name
+      not is_nil(drive.end_address) -> trim_addr(drive.end_address)
+      true -> nil
+    end
+  end
+
+  def drive_origin_name(drive) do
+    cond do
+      drive == nil -> nil
+      not is_nil(drive.start_geofence) -> drive.start_geofence.name
+      not is_nil(drive.start_address) -> trim_addr(drive.start_address)
+      true -> nil
+    end
+  end
+
+  defp trim_addr(%{name: name}) when is_binary(name) and name != "", do: name
+  defp trim_addr(%{city: city}) when is_binary(city) and city != "", do: city
+  defp trim_addr(_), do: "—"
 end

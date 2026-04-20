@@ -76,5 +76,32 @@
       }
       .tire-car { color: rgba(204, 204, 220, 0.35); }
     }
+
+    .insight-card {
+      background: rgba(204, 204, 220, 0.05);
+      border-color: rgba(204, 204, 220, 0.12);
+      .insight-label,
+      .insight-unit { color: rgba(204, 204, 220, 0.55); }
+      .insight-sub { color: rgba(204, 204, 220, 0.45); }
+    }
+
+    .last-drive-card {
+      .last-drive-header { color: rgba(204, 204, 220, 0.55); }
+      .last-drive-route .arrow { color: rgba(204, 204, 220, 0.45); }
+      .last-drive-stats { color: rgba(204, 204, 220, 0.55); }
+    }
+
+    .weather-strip {
+      .weather-title { color: rgba(204, 204, 220, 0.55); }
+      .weather-day {
+        background: rgba(204, 204, 220, 0.05);
+        .wd-name { color: rgba(204, 204, 220, 0.8); }
+        .icon { color: rgba(204, 204, 220, 0.6); }
+        .wd-tmax { color: hsl(20, 70%, 65%); }
+        .wd-tmin { color: hsl(210, 60%, 68%); }
+        .wd-precip { color: hsl(210, 50%, 65%); }
+        .wd-precip.wd-dry { color: rgba(204, 204, 220, 0.3); }
+      }
+    }
   }
 }

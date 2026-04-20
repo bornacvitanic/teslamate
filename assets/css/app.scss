@@ -327,6 +327,148 @@ nav.navbar {
       line-height: 1;
     }
   }
+
+  .insight-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.5rem;
+    padding: 0.25rem 1rem 0.5rem;
+  }
+  .insight-card {
+    background: hsl(0, 0%, 97%);
+    border: 1px solid hsl(0, 0%, 90%);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+
+    .insight-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(0, 0%, 45%);
+      font-weight: 600;
+    }
+    .insight-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+      margin-top: 0.15rem;
+    }
+    .insight-unit {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: hsl(0, 0%, 45%);
+    }
+    .insight-sub {
+      font-size: 0.78rem;
+      color: hsl(0, 0%, 50%);
+      margin-top: 0.1rem;
+    }
+  }
+
+  .last-drive-card {
+    padding: 0.6rem 1rem;
+
+    .last-drive-header {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(0, 0%, 45%);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.2rem;
+      .icon { font-size: 0.9rem; }
+    }
+    .last-drive-route {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      flex-wrap: wrap;
+      .loc {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 12rem;
+        white-space: nowrap;
+      }
+      .arrow { color: hsl(0, 0%, 55%); }
+    }
+    .last-drive-stats {
+      font-size: 0.82rem;
+      color: hsl(0, 0%, 45%);
+      margin-top: 0.1rem;
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      gap: 0.35rem;
+    }
+  }
+
+  .weather-strip {
+    padding: 0.5rem 1rem 0.75rem;
+
+    .weather-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(0, 0%, 45%);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.35rem;
+      .icon { font-size: 0.9rem; }
+    }
+
+    .weather-status {
+      font-size: 0.82rem;
+      color: hsl(0, 0%, 55%);
+      padding: 0.4rem 0;
+    }
+    .weather-status.is-offline { color: hsl(348, 60%, 50%); }
+
+    .weather-days {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.3rem;
+    }
+
+    .weather-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      padding: 0.4rem 0.1rem;
+      background: hsl(210, 20%, 97%);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+
+      .wd-name {
+        font-weight: 600;
+        color: hsl(0, 0%, 35%);
+      }
+      .icon { font-size: 1.25rem; color: hsl(210, 25%, 40%); }
+
+      .wd-temps {
+        display: flex;
+        gap: 0.3rem;
+        font-weight: 600;
+      }
+      .wd-tmax { color: hsl(20, 70%, 50%); }
+      .wd-tmin { color: hsl(210, 50%, 50%); }
+      .wd-precip {
+        color: hsl(210, 50%, 45%);
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        font-size: 0.7rem;
+        .icon { font-size: 0.75rem; color: inherit; }
+      }
+      .wd-precip.wd-dry { color: hsl(0, 0%, 70%); }
+    }
+  }
 }
 
 .navbar-brand a.navbar-item:hover {
