@@ -18,7 +18,8 @@ RUN apt-get update \
 RUN mix local.rebar --force && \
     mix local.hex --force
 
-ENV MIX_ENV=prod
+ENV MIX_ENV=prod \
+    SKIP_LOCALE_DOWNLOAD=true
 WORKDIR /opt/app
 
 COPY mix.exs mix.lock ./
