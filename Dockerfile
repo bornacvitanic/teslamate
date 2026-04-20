@@ -41,6 +41,26 @@ COPY priv/repo/migrations priv/repo/migrations
 COPY priv/gettext priv/gettext
 COPY grafana/dashboards grafana/dashboards
 COPY VERSION VERSION
+
+# Pre-fetch CLDR locale JSON to priv/cldr/locales/ so ex_cldr uses the
+# cache instead of downloading at compile time. Works around GitHub's
+# aggressive raw.githubusercontent.com rate limits on Actions runners.
+# LOCALES env is read by lib/teslamate_web/cldr.ex as data_dir.
+ENV LOCALES=/opt/app/priv/cldr
+RUN mkdir -p "$LOCALES/locales" && cd "$LOCALES/locales" \
+    && for gl in $(ls /opt/app/priv/gettext); do \
+         [ -d "/opt/app/priv/gettext/$gl" ] || continue; \
+         cl="${gl//_/-}"; \
+         for attempt in 1 2 3 4 5 6; do \
+           if curl -fsSLo "$cl.json" "https://raw.githubusercontent.com/elixir-cldr/cldr/v2.46.0/priv/cldr/locales/$cl.json"; then \
+             echo "fetched $cl"; break; \
+           fi; \
+           echo "retry $attempt for $cl"; sleep $((attempt * 10)); \
+         done; \
+       done \
+    && curl -fsSLo en.json "https://raw.githubusercontent.com/elixir-cldr/cldr/v2.46.0/priv/cldr/locales/en.json" \
+    && ls -la "$LOCALES/locales"
+
 RUN mix compile
 
 COPY config/runtime.exs config/runtime.exs
