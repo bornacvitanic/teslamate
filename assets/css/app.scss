@@ -378,11 +378,59 @@ nav.navbar {
     }
   }
 
-  .cost-row {
+  .cost-row,
+  .gear-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 0.5rem;
     padding: 0.25rem 1rem 0.5rem;
+  }
+  .gear-card {
+    background: hsl(0, 0%, 97%);
+    border: 1px solid hsl(0, 0%, 90%);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+
+    .gear-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(0, 0%, 45%);
+      font-weight: 600;
+    }
+    .gear-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+      margin-top: 0.15rem;
+      color: hsl(0, 0%, 15%);
+    }
+    .gear-value-sm {
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .gear-sub {
+      font-size: 0.75rem;
+      color: hsl(0, 0%, 50%);
+      margin-top: 0.1rem;
+    }
+    &.is-good {
+      background: hsla(141, 53%, 53%, 0.08);
+      border-color: hsla(141, 53%, 53%, 0.3);
+      .gear-value { color: hsl(141, 53%, 32%); }
+    }
+    &.is-warn {
+      background: hsla(36, 90%, 55%, 0.08);
+      border-color: hsla(36, 90%, 55%, 0.3);
+      .gear-value { color: hsl(36, 80%, 35%); }
+    }
+    &.is-low {
+      background: hsla(348, 80%, 58%, 0.08);
+      border-color: hsla(348, 80%, 58%, 0.3);
+      .gear-value { color: hsl(348, 70%, 40%); }
+    }
   }
   .cost-card {
     background: hsl(0, 0%, 97%);

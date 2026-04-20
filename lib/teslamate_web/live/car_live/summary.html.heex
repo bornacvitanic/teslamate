@@ -400,6 +400,65 @@
           <% end %>
         </div>
       <% end %>
+      <div class="gear-row">
+        <%= if @widget.tire do %>
+          <div class="gear-card">
+            <div class="gear-label">Tires (<%= @widget.tire.type %>)</div>
+            <div class="gear-value gear-value-sm"><%= @widget.tire.label %></div>
+            <div class="gear-sub">
+              <%= if @summary.odometer && @widget.tire.odometer_at_mount do %>
+                <%= round(@summary.odometer - @widget.tire.odometer_at_mount) %> km since mount
+              <% else %>
+                mounted
+                <%= tag(:span,
+                  data: [date: @widget.tire.mounted_at |> DateTime.to_iso8601()],
+                  phx_hook: "LocalTime",
+                  id: "tire_mounted_#{@car.id}"
+                ) %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @widget.battery_health do %>
+          <% health = @widget.battery_health %>
+          <% pct = round(health.health_pct) %>
+          <% pct_cls = cond do
+            pct >= 92 -> "is-good"
+            pct >= 85 -> "is-warn"
+            true -> "is-low"
+          end %>
+          <div class={"gear-card #{pct_cls}"}>
+            <div class="gear-label">Battery health</div>
+            <div class="gear-value"><%= pct %>%</div>
+            <div class="gear-sub">
+              <%= round(health.current_km) %> km est · from <%= round(health.original_km) %> km new
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @widget.efficiency && @widget.efficiency.last_wh_km do %>
+          <% eff = @widget.efficiency %>
+          <% delta = eff.last_wh_km - eff.lifetime_wh_km %>
+          <% delta_cls = cond do
+            delta < -5 -> "is-good"
+            delta > 15 -> "is-low"
+            true -> ""
+          end %>
+          <div class={"gear-card #{delta_cls}"}>
+            <div class="gear-label">Last drive Wh/km</div>
+            <div class="gear-value"><%= round(eff.last_wh_km) %></div>
+            <div class="gear-sub">
+              lifetime avg <%= round(eff.lifetime_wh_km) %>
+              <%= cond do
+                delta > 0 -> " · +#{round(delta)}"
+                delta < 0 -> " · #{round(delta)}"
+                true -> ""
+              end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
     <% end %>
 
     <div class="weather-strip">

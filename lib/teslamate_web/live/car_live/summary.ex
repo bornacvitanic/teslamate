@@ -379,6 +379,15 @@ defmodule TeslaMateWeb.CarLive.Summary do
     cost_per_km_month =
       if month_km_f > 0, do: month_cost_eur / month_km_f, else: nil
 
+    # Current mounted tire set (if tyre_mounts table has an open mount)
+    tire_info = fetch_tire_info(car_id)
+
+    # Battery health: avg end-range-at-100% for first 10 vs last 10 charges
+    battery_health = fetch_battery_health(car_id)
+
+    # Efficiency: last drive's Wh/km vs lifetime average (using cars.efficiency)
+    efficiency = fetch_efficiency(car_id, last_drive)
+
     %{
       today: today,
       last_drive: last_drive,
@@ -393,8 +402,123 @@ defmodule TeslaMateWeb.CarLive.Summary do
         month_km: month_km_f,
         cost_per_km: cost_per_km_month,
         savings_lifetime: savings
-      }
+      },
+      tire: tire_info,
+      battery_health: battery_health,
+      efficiency: efficiency
     }
+  end
+
+  defp fetch_tire_info(car_id) do
+    Repo.one(
+      from m in "tyre_mounts",
+        join: s in "tyre_sets",
+        on: s.id == m.tyre_set_id,
+        where: m.car_id == ^car_id and is_nil(m.unmounted_at),
+        order_by: [desc: m.mounted_at],
+        limit: 1,
+        select: %{
+          label: s.label,
+          type: s.type,
+          mounted_at: m.mounted_at,
+          odometer_at_mount: m.odometer_at_mount
+        }
+    )
+  end
+
+  defp fetch_battery_health(car_id) do
+    base_where = fn q ->
+      from c in q,
+        where:
+          c.car_id == ^car_id and not is_nil(c.end_rated_range_km) and
+            not is_nil(c.end_battery_level) and c.end_battery_level >= 20
+    end
+
+    first10 =
+      Repo.all(
+        base_where.(ChargingProcess)
+        |> order_by(asc: :start_date)
+        |> limit(10)
+        |> select(
+          [c],
+          type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
+        )
+      )
+
+    last10 =
+      Repo.all(
+        base_where.(ChargingProcess)
+        |> order_by(desc: :start_date)
+        |> limit(10)
+        |> select(
+          [c],
+          type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
+        )
+      )
+
+    if length(first10) >= 3 and length(last10) >= 3 do
+      original = Enum.sum(first10) / length(first10)
+      current = Enum.sum(last10) / length(last10)
+
+      if original > 0 and current > 0 do
+        %{original_km: original, current_km: current, health_pct: current / original * 100.0}
+      else
+        nil
+      end
+    else
+      nil
+    end
+  end
+
+  defp fetch_efficiency(car_id, last_drive) do
+    car_efficiency =
+      Repo.one(
+        from c in TeslaMate.Log.Car, where: c.id == ^car_id, select: c.efficiency
+      )
+
+    case car_efficiency do
+      nil ->
+        nil
+
+      _ ->
+        eff_f = to_float(car_efficiency)
+
+        lifetime =
+          Repo.one(
+            from d in Drive,
+              where:
+                d.car_id == ^car_id and not is_nil(d.distance) and d.distance > 0.5 and
+                  not is_nil(d.start_rated_range_km) and not is_nil(d.end_rated_range_km),
+              select: %{
+                range_delta: coalesce(sum(d.start_rated_range_km - d.end_rated_range_km), 0),
+                km: coalesce(sum(d.distance), 0.0)
+              }
+          )
+
+        km = to_float(lifetime.km)
+
+        if km > 0 do
+          lifetime_wh_km = to_float(lifetime.range_delta) / km * eff_f * 1000.0
+
+          last_wh_km =
+            case last_drive do
+              %{
+                distance: dist,
+                start_rated_range_km: sr,
+                end_rated_range_km: er
+              }
+              when not is_nil(dist) and dist > 0.5 and not is_nil(sr) and not is_nil(er) ->
+                (to_float(sr) - to_float(er)) / dist * eff_f * 1000.0
+
+              _ ->
+                nil
+            end
+
+          %{lifetime_wh_km: lifetime_wh_km, last_wh_km: last_wh_km}
+        else
+          nil
+        end
+    end
   end
 
   defp month_start_utc(tz) do

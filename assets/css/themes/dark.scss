@@ -104,6 +104,29 @@
       }
     }
 
+    .gear-card {
+      background: rgba(204, 204, 220, 0.05);
+      border-color: rgba(204, 204, 220, 0.12);
+      .gear-label { color: rgba(204, 204, 220, 0.55); }
+      .gear-value { color: rgba(204, 204, 220, 0.95); }
+      .gear-sub { color: rgba(204, 204, 220, 0.45); }
+      &.is-good {
+        background: hsla(141, 53%, 45%, 0.12);
+        border-color: hsla(141, 53%, 50%, 0.35);
+        .gear-value { color: hsl(141, 53%, 72%); }
+      }
+      &.is-warn {
+        background: hsla(36, 90%, 55%, 0.12);
+        border-color: hsla(36, 90%, 55%, 0.35);
+        .gear-value { color: hsl(36, 90%, 70%); }
+      }
+      &.is-low {
+        background: hsla(348, 80%, 58%, 0.12);
+        border-color: hsla(348, 80%, 58%, 0.35);
+        .gear-value { color: hsl(348, 75%, 72%); }
+      }
+    }
+
     .last-drive-card {
       .last-drive-header { color: rgba(204, 204, 220, 0.55); }
       .last-drive-route .arrow { color: rgba(204, 204, 220, 0.45); }
