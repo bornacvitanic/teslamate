@@ -275,7 +275,17 @@
           <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fr, @settings.unit_of_pressure) %></span>
         </div>
         <div class="tire-car">
-          <span class="mdi mdi-car-estate"></span>
+          <svg class="car-topdown" viewBox="0 0 80 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect class="car-body" x="12" y="14" width="56" height="112" rx="18" ry="22"/>
+            <path class="car-window" d="M 20 40 Q 40 34 60 40 L 56 55 L 24 55 Z"/>
+            <path class="car-window" d="M 20 100 Q 40 106 60 100 L 56 85 L 24 85 Z"/>
+            <rect class="car-wheel" x="4" y="28" width="10" height="18" rx="3"/>
+            <rect class="car-wheel" x="66" y="28" width="10" height="18" rx="3"/>
+            <rect class="car-wheel" x="4" y="94" width="10" height="18" rx="3"/>
+            <rect class="car-wheel" x="66" y="94" width="10" height="18" rx="3"/>
+            <circle class="car-mirror" cx="11" cy="58" r="2.3"/>
+            <circle class="car-mirror" cx="69" cy="58" r="2.3"/>
+          </svg>
         </div>
         <div class={"tire pos-rl #{tire_cls.(@summary.tpms_soft_warning_rl)}"}>
           <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rl, @settings.unit_of_pressure) %></span>

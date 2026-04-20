@@ -293,12 +293,13 @@ nav.navbar {
 
   .tire-panel {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto auto auto;
     grid-template-rows: auto auto;
-    gap: 0.4rem 1rem;
-    padding: 0.5rem 1rem 0.75rem;
+    gap: 0.2rem 0.35rem;
+    padding: 0.6rem 1rem 0.8rem;
     align-items: center;
     justify-items: center;
+    justify-content: center;
 
     .tire {
       border: 2px solid hsl(0, 0%, 70%);
@@ -307,7 +308,7 @@ nav.navbar {
       font-size: 0.82rem;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
-      min-width: 4.2rem;
+      min-width: 3.6rem;
       text-align: center;
       background: hsl(0, 0%, 98%);
     }
@@ -322,9 +323,20 @@ nav.navbar {
     .tire-car {
       grid-column: 2;
       grid-row: 1 / span 2;
-      font-size: 2.6rem;
-      color: hsl(0, 0%, 60%);
-      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .car-topdown {
+        width: 3.25rem;
+        height: auto;
+        display: block;
+
+        .car-body   { fill: hsl(0, 0%, 55%); }
+        .car-window { fill: rgba(255, 255, 255, 0.22); }
+        .car-wheel  { fill: hsl(0, 0%, 25%); }
+        .car-mirror { fill: hsl(0, 0%, 30%); }
+      }
     }
   }
 
