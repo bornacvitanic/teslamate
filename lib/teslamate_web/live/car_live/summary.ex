@@ -187,6 +187,19 @@ defmodule TeslaMateWeb.CarLive.Summary do
     "#{c} °C"
   end
 
+  def format_eur(val), do: format_money(val, 2)
+  def format_eur_km(val), do: format_money(val, 3)
+
+  defp format_money(nil, dec), do: :erlang.float_to_binary(0.0, decimals: dec)
+
+  defp format_money(%Decimal{} = d, dec),
+    do: :erlang.float_to_binary(Decimal.to_float(d), decimals: dec)
+
+  defp format_money(n, dec) when is_integer(n),
+    do: :erlang.float_to_binary(n * 1.0, decimals: dec)
+
+  defp format_money(n, dec) when is_float(n), do: :erlang.float_to_binary(n, decimals: dec)
+
   def format_duration(pairs) when is_list(pairs) do
     pairs |> Enum.map(&to_string/1) |> Enum.join(", ")
   end
@@ -274,8 +287,12 @@ defmodule TeslaMateWeb.CarLive.Summary do
     start_async(socket, :weather, fn -> Weather.forecast(lat, lng) end)
   end
 
+  # Assumed ICE consumption for "savings vs gas" — roughly a Model Y-sized SUV.
+  @ice_l_per_100km 7.5
+
   defp fetch_widget_data(car_id, tz) do
     {today_start_utc, now} = today_window(tz)
+    month_start_utc = month_start_utc(tz)
 
     today_raw =
       Repo.one(
@@ -311,15 +328,87 @@ defmodule TeslaMateWeb.CarLive.Summary do
         from c in ChargingProcess, where: c.car_id == ^car_id, select: max(c.start_date)
       )
 
+    # Monthly charging cost & kWh added
+    month_charge =
+      Repo.one(
+        from c in ChargingProcess,
+          where:
+            c.car_id == ^car_id and c.start_date >= ^month_start_utc and not is_nil(c.cost),
+          select: %{
+            cost: coalesce(sum(c.cost), 0),
+            kwh: coalesce(sum(c.charge_energy_added), 0),
+            sessions: count(c.id)
+          }
+      )
+
+    # km driven this month
+    month_km =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id and d.start_date >= ^month_start_utc,
+          select: coalesce(sum(d.distance), 0.0)
+      )
+
+    # Lifetime ICE-equivalent cost using actual fuel prices per drive
+    ice_cost_lifetime =
+      Repo.one(
+        from d in Drive,
+          join: dfp in "drive_fuel_price",
+          on: dfp.drive_id == d.id and dfp.fuel_type == "eurosuper_95",
+          where: d.car_id == ^car_id,
+          select: coalesce(sum(d.distance * ^(@ice_l_per_100km / 100.0) * dfp.fuel_price_eur_l), 0)
+      )
+
+    # Lifetime charging cost
+    ev_cost_lifetime =
+      Repo.one(
+        from c in ChargingProcess,
+          where: c.car_id == ^car_id and not is_nil(c.cost),
+          select: coalesce(sum(c.cost), 0)
+      )
+
+    # Manual payments (not car-scoped in their table, used lifetime)
+    manual_cost =
+      Repo.one(from m in "manual_payments", select: coalesce(sum(m.amount_paid), 0))
+
+    savings = to_float(ice_cost_lifetime) - to_float(ev_cost_lifetime) - to_float(manual_cost)
+
+    month_cost_eur = to_float(month_charge.cost)
+    month_km_f = to_float(month_km)
+
+    cost_per_km_month =
+      if month_km_f > 0, do: month_cost_eur / month_km_f, else: nil
+
     %{
       today: today,
       last_drive: last_drive,
       days_since_drive: days_since(last_drive_at, now),
       days_since_charge: days_since(last_charge_at, now),
       last_drive_at: last_drive_at,
-      last_charge_at: last_charge_at
+      last_charge_at: last_charge_at,
+      cost: %{
+        month_eur: month_cost_eur,
+        month_kwh: to_float(month_charge.kwh),
+        month_sessions: month_charge.sessions || 0,
+        month_km: month_km_f,
+        cost_per_km: cost_per_km_month,
+        savings_lifetime: savings
+      }
     }
   end
+
+  defp month_start_utc(tz) do
+    tz = if tz_valid?(tz), do: tz, else: @fallback_tz
+    now_local = DateTime.now!(tz)
+    %{year: y, month: m} = now_local
+    DateTime.new!(Date.new!(y, m, 1), ~T[00:00:00], tz)
+    |> DateTime.shift_zone!("Etc/UTC")
+  end
+
+  defp to_float(nil), do: 0.0
+  defp to_float(%Decimal{} = d), do: Decimal.to_float(d)
+  defp to_float(n) when is_integer(n), do: n * 1.0
+  defp to_float(n) when is_float(n), do: n
 
   # Coerce Ecto aggregate results (Decimal | float | integer | nil) to integer
   defp to_int(nil), do: 0

@@ -378,6 +378,46 @@ nav.navbar {
     }
   }
 
+  .cost-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.5rem;
+    padding: 0.25rem 1rem 0.5rem;
+  }
+  .cost-card {
+    background: hsl(0, 0%, 97%);
+    border: 1px solid hsl(0, 0%, 90%);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+
+    .cost-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(0, 0%, 45%);
+      font-weight: 600;
+    }
+    .cost-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+      margin-top: 0.15rem;
+      color: hsl(0, 0%, 15%);
+    }
+    .cost-sub {
+      font-size: 0.75rem;
+      color: hsl(0, 0%, 50%);
+      margin-top: 0.1rem;
+    }
+    &.is-savings {
+      background: hsla(141, 53%, 53%, 0.08);
+      border-color: hsla(141, 53%, 53%, 0.3);
+      .cost-value { color: hsl(141, 53%, 32%); }
+      .cost-label { color: hsl(141, 40%, 40%); }
+    }
+  }
+
   .last-drive-card {
     padding: 0.6rem 1rem;
 

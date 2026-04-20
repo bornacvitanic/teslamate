@@ -372,6 +372,34 @@
           </div>
         </div>
       <% end %>
+      <%= if @widget.cost do %>
+        <div class="cost-row">
+          <div class="cost-card">
+            <div class="cost-label">This month</div>
+            <div class="cost-value">€<%= format_eur(@widget.cost.month_eur) %></div>
+            <div class="cost-sub">
+              <%= :erlang.float_to_binary(@widget.cost.month_kwh * 1.0, decimals: 1) %> kWh
+              · <%= @widget.cost.month_sessions %> session<%= if @widget.cost.month_sessions == 1, do: "", else: "s" %>
+            </div>
+          </div>
+
+          <%= if @widget.cost.cost_per_km do %>
+            <div class="cost-card">
+              <div class="cost-label">Cost / km</div>
+              <div class="cost-value">€<%= format_eur_km(@widget.cost.cost_per_km) %></div>
+              <div class="cost-sub">this month</div>
+            </div>
+          <% end %>
+
+          <%= if @widget.cost.savings_lifetime > 0 do %>
+            <div class="cost-card is-savings">
+              <div class="cost-label">Saved vs ICE</div>
+              <div class="cost-value">€<%= format_eur(@widget.cost.savings_lifetime) %></div>
+              <div class="cost-sub">lifetime</div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     <% end %>
 
     <div class="weather-strip">
