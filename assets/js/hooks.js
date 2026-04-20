@@ -172,12 +172,12 @@ export const SimpleMap = {
       elId: this.el.dataset.id,
       zoomControl: !!this.el.dataset.zoom,
       boxZoom: false,
-      doubleClickZoom: false,
+      doubleClickZoom: true,
       keyboard: false,
-      scrollWheelZoom: false,
-      tap: false,
-      dragging: false,
-      touchZoom: false,
+      scrollWheelZoom: true,
+      tap: true,
+      dragging: true,
+      touchZoom: true,
     });
 
     const isArrow = this.el.dataset.marker === "arrow";
@@ -190,13 +190,11 @@ export const SimpleMap = {
     map.setView([lat, lng], 17);
     marker.addTo(map);
 
-    map.removeControl(map.zoomControl);
-
-    map.on("mouseover", function (e) {
-      map.addControl(map.zoomControl);
-    });
-    map.on("mouseout", function (e) {
-      map.removeControl(map.zoomControl);
+    // Auto-pan follows the car while driving, but pause for 30s after the
+    // user drags or zooms so they can explore without being yanked back.
+    let autoCenterSuspendedUntil = 0;
+    map.on("dragstart zoomstart", () => {
+      autoCenterSuspendedUntil = Date.now() + 30_000;
     });
 
     if (isArrow) {
@@ -204,7 +202,9 @@ export const SimpleMap = {
         const [lat, lng, heading] = $position.value.split(",");
         marker.setHeading(heading);
         marker.setLatLng([lat, lng]);
-        map.setView([lat, lng], map.getZoom());
+        if (Date.now() >= autoCenterSuspendedUntil) {
+          map.setView([lat, lng], map.getZoom());
+        }
       };
 
       $position.addEventListener("change", setView);
