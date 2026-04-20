@@ -177,6 +177,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
   def format_temp(nil, _unit), do: "—"
 
+  def format_temp(%Decimal{} = c, unit), do: format_temp(Decimal.to_float(c), unit)
+
   def format_temp(c, :F) when is_number(c) do
     "#{Convert.celsius_to_fahrenheit(c, 1)} °F"
   end
