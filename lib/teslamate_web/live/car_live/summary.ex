@@ -57,8 +57,11 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
     socket = assign(socket, assigns)
 
+    # Always kick off a fetch when connected. If coords are nil at this point
+    # (common for offline cars), Weather.forecast returns :error and we'll
+    # retry once a fresh Summary with coords arrives.
     socket =
-      if connected?(socket) and is_number(summary.latitude) and is_number(summary.longitude) do
+      if connected?(socket) do
         start_weather_fetch(socket, summary.latitude, summary.longitude)
       else
         socket
@@ -112,8 +115,20 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   def handle_info(%Summary{since: since} = summary, socket) do
-    {:noreply,
-     assign(socket, summary: summary, duration: humanize_duration(since), loading: false)}
+    socket =
+      assign(socket, summary: summary, duration: humanize_duration(since), loading: false)
+
+    # If weather hasn't loaded yet and we now have valid coords, kick off a fetch.
+    # This covers the offline-car case where the initial Summary had no lat/lng.
+    socket =
+      if socket.assigns.weather in [:loading, :error] and
+           is_number(summary.latitude) and is_number(summary.longitude) do
+        start_weather_fetch(socket, summary.latitude, summary.longitude)
+      else
+        socket
+      end
+
+    {:noreply, socket}
   end
 
   def handle_info({:status, true}, socket) do
@@ -218,6 +233,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
       if is_number(lat) and is_number(lng) do
         start_weather_fetch(socket, lat, lng)
       else
+        # Still no coords — schedule another retry and mark offline.
+        Process.send_after(self(), :refresh_weather, @weather_retry_ms)
         assign(socket, weather: :error)
       end
 

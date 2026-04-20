@@ -425,41 +425,8 @@
               <td><%= formatted_finish_time %></td>
             </tr>
           <% end %>
-          <%= unless is_nil(@summary.ideal_battery_range_km) do %>
-            <tr>
-              <td class="has-text-weight-medium">
-                <%= case @settings.preferred_range do
-                  :ideal -> gettext("Range (ideal)")
-                  :rated -> gettext("Range (rated)")
-                end %>
-              </td>
-              <td>
-                <%= range =
-                  case @settings.preferred_range do
-                    :ideal -> @summary.ideal_battery_range_km
-                    :rated -> @summary.rated_battery_range_km
-                  end
-
-                if @settings.unit_of_length == :mi do
-                  "#{Convert.km_to_miles(range, 1)} mi"
-                else
-                  "#{range} km"
-                end %>
-              </td>
-            </tr>
-          <% end %>
-          <%= unless is_nil(@summary.est_battery_range_km) do %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("Range (est.)") %></td>
-              <td>
-                <%= if @settings.unit_of_length == :mi do
-                  "#{Convert.km_to_miles(@summary.est_battery_range_km, 1)} mi"
-                else
-                  "#{@summary.est_battery_range_km} km"
-                end %>
-              </td>
-            </tr>
-          <% end %>
+          <%# Range (preferred) row removed — in battery widget %>
+          <%# Range (est.) row removed %>
           <%= if @summary.state == :charging do %>
             <%= unless is_nil(@summary.charge_energy_added) do %>
               <tr>
@@ -488,55 +455,9 @@
                 </td>
               </tr>
             <% end %>
-            <%= if not is_nil(@summary.charge_limit_soc) do %>
-              <tr>
-                <td class="has-text-weight-medium"><%= gettext("Charge Limit") %></td>
-                <td><%= @summary.charge_limit_soc %>%</td>
-              </tr>
-            <% end %>
+            <%# Charge Limit row removed — in battery widget %>
           <% end %>
-          <%= unless is_nil(@summary.battery_level) do %>
-            <% {soc_text, tooltip} =
-              (fn ->
-                 {text, tooltip_battery_level} =
-                   case {@summary.battery_level, @summary.usable_battery_level} do
-                     {lvl, lvl} -> {"#{lvl}%", lvl}
-                     {lvl, nil} -> {"#{lvl}%", lvl}
-                     {lvl, usable_lvl} -> {"#{usable_lvl}% (#{lvl}%)", usable_lvl}
-                   end
-
-                 current_range =
-                   case @settings.preferred_range do
-                     :ideal -> @summary.ideal_battery_range_km
-                     :rated -> @summary.rated_battery_range_km
-                   end
-
-                 tooltip =
-                   if is_number(current_range) and
-                        is_number(tooltip_battery_level) and tooltip_battery_level > 0 do
-                     r100 = current_range / tooltip_battery_level * 100
-
-                     r100_str =
-                       if @settings.unit_of_length == :mi do
-                         "#{Convert.km_to_miles(r100, 0)} mi"
-                       else
-                         "#{round(r100)} km"
-                       end
-
-                     gettext("≈ %{range} at 100%", range: r100_str)
-                   end
-
-                 {text, tooltip}
-               end).() %>
-            <tr>
-              <td class="has-text-weight-medium"><%= gettext("State of Charge") %></td>
-              <td>
-                <span class="has-tooltip-top has-tooltip-right-desktop" data-tooltip={tooltip}>
-                  <%= soc_text %>
-                </span>
-              </td>
-            </tr>
-          <% end %>
+          <%# State of Charge row removed — in battery widget %>
           <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
             <tr>
               <td class="has-text-weight-medium"><%= gettext("Speed") %></td>
