@@ -207,6 +207,73 @@
         <% end %>
       </div>
     </div>
+
+    <%= if not is_nil(@summary.battery_level) do %>
+      <% lvl = @summary.usable_battery_level || @summary.battery_level %>
+      <% raw_lvl = @summary.battery_level %>
+      <% limit = @summary.charge_limit_soc %>
+      <% range_km =
+        case @settings.preferred_range do
+          :ideal -> @summary.ideal_battery_range_km
+          :rated -> @summary.rated_battery_range_km
+        end %>
+      <% range_str =
+        cond do
+          is_nil(range_km) -> nil
+          @settings.unit_of_length == :mi -> "#{Convert.km_to_miles(range_km, 0)} mi"
+          true -> "#{round(range_km)} km"
+        end %>
+      <% color_class =
+        cond do
+          lvl >= 50 -> "is-good"
+          lvl >= 20 -> "is-warn"
+          true -> "is-low"
+        end %>
+      <div class="battery-hero">
+        <div class={"battery-bar #{color_class} #{if @summary.state == :charging, do: "is-charging", else: ""}"}>
+          <div class="battery-fill" style={"width: #{lvl}%"}></div>
+          <%= if lvl != raw_lvl do %>
+            <div class="battery-reduced" style={"left: #{lvl}%; width: #{raw_lvl - lvl}%"}></div>
+          <% end %>
+          <%= if is_number(limit) and limit < 100 do %>
+            <div class="battery-limit-mark" style={"left: #{limit}%"} title={"Charge limit #{limit}%"}></div>
+          <% end %>
+          <div class="battery-terminal"></div>
+        </div>
+        <div class="battery-readout">
+          <span class="battery-pct"><%= lvl %>%</span>
+          <%= if range_str do %>
+            <span class="battery-range"><%= range_str %></span>
+          <% end %>
+          <%= if is_number(limit) and limit < 100 do %>
+            <span class="battery-limit-text">Limit <%= limit %>%</span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%= if not is_nil(@summary.tpms_pressure_fl) and not is_nil(@summary.tpms_pressure_fr)
+        and not is_nil(@summary.tpms_pressure_rl) and not is_nil(@summary.tpms_pressure_rr) do %>
+      <% tire_cls = fn warn -> if warn == true, do: "is-low", else: "is-ok" end %>
+      <div class="tire-panel">
+        <div class={"tire pos-fl #{tire_cls.(@summary.tpms_soft_warning_fl)}"}>
+          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fl, @settings.unit_of_pressure) %></span>
+        </div>
+        <div class={"tire pos-fr #{tire_cls.(@summary.tpms_soft_warning_fr)}"}>
+          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fr, @settings.unit_of_pressure) %></span>
+        </div>
+        <div class="tire-car">
+          <span class="mdi mdi-car-estate"></span>
+        </div>
+        <div class={"tire pos-rl #{tire_cls.(@summary.tpms_soft_warning_rl)}"}>
+          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rl, @settings.unit_of_pressure) %></span>
+        </div>
+        <div class={"tire pos-rr #{tire_cls.(@summary.tpms_soft_warning_rr)}"}>
+          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rr, @settings.unit_of_pressure) %></span>
+        </div>
+      </div>
+    <% end %>
+
     <div class="content">
       <table class="table is-narrow is-fullwidth thead-transparent">
         <thead>

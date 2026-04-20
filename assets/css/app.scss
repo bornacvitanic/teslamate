@@ -182,6 +182,151 @@ nav.navbar {
   button[phx-click="suspend_logging"]:disabled {
     pointer-events: none;
   }
+
+  .battery-hero {
+    padding: 0.75rem 1rem 0.5rem;
+
+    .battery-bar {
+      position: relative;
+      height: 28px;
+      border: 2px solid hsl(0, 0%, 45%);
+      border-radius: 6px;
+      background: hsl(0, 0%, 95%);
+      overflow: visible;
+    }
+
+    .battery-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      border-radius: 3px 0 0 3px;
+      transition: width 0.4s ease;
+    }
+
+    .battery-reduced {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        hsla(210, 80%, 55%, 0.45),
+        hsla(210, 80%, 55%, 0.45) 4px,
+        hsla(210, 80%, 70%, 0.25) 4px,
+        hsla(210, 80%, 70%, 0.25) 8px
+      );
+    }
+
+    .battery-bar.is-good .battery-fill { background: hsl(141, 53%, 53%); }
+    .battery-bar.is-warn .battery-fill { background: hsl(36, 90%, 55%); }
+    .battery-bar.is-low  .battery-fill { background: hsl(348, 80%, 58%); }
+
+    .battery-bar.is-charging .battery-fill {
+      background-image: linear-gradient(
+        90deg,
+        hsla(0, 0%, 100%, 0) 0%,
+        hsla(0, 0%, 100%, 0.35) 50%,
+        hsla(0, 0%, 100%, 0) 100%
+      );
+      background-size: 40% 100%;
+      background-repeat: no-repeat;
+      animation: battery-pulse 2.2s ease-in-out infinite;
+    }
+
+    .battery-limit-mark {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: hsl(0, 0%, 25%);
+      transform: translateX(-1px);
+    }
+    .battery-limit-mark::after {
+      content: "";
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      width: 8px;
+      height: 3px;
+      background: hsl(0, 0%, 25%);
+    }
+
+    .battery-terminal {
+      position: absolute;
+      top: 6px;
+      right: -5px;
+      width: 4px;
+      height: 14px;
+      background: hsl(0, 0%, 45%);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .battery-readout {
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+
+      .battery-pct {
+        font-size: 1.75rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      .battery-range {
+        color: hsl(0, 0%, 40%);
+        font-variant-numeric: tabular-nums;
+      }
+      .battery-limit-text {
+        font-size: 0.78rem;
+        color: hsl(0, 0%, 50%);
+        margin-left: auto;
+      }
+    }
+  }
+
+  @keyframes battery-pulse {
+    0%   { background-position: -40% 0; }
+    100% { background-position: 140% 0; }
+  }
+
+  .tire-panel {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0.4rem 1rem;
+    padding: 0.5rem 1rem 0.75rem;
+    align-items: center;
+    justify-items: center;
+
+    .tire {
+      border: 2px solid hsl(0, 0%, 70%);
+      border-radius: 6px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      min-width: 4.2rem;
+      text-align: center;
+      background: hsl(0, 0%, 98%);
+    }
+    .tire.is-ok  { border-color: hsl(141, 53%, 53%); color: hsl(141, 53%, 35%); }
+    .tire.is-low { border-color: hsl(348, 80%, 58%); color: hsl(348, 80%, 45%); background: hsl(348, 80%, 97%); }
+
+    .tire.pos-fl { grid-column: 1; grid-row: 1; }
+    .tire.pos-fr { grid-column: 3; grid-row: 1; }
+    .tire.pos-rl { grid-column: 1; grid-row: 2; }
+    .tire.pos-rr { grid-column: 3; grid-row: 2; }
+
+    .tire-car {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      font-size: 2.6rem;
+      color: hsl(0, 0%, 60%);
+      line-height: 1;
+    }
+  }
 }
 
 .navbar-brand a.navbar-item:hover {
