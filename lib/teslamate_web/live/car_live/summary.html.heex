@@ -527,8 +527,11 @@
           <% end %>
           <%= if not is_nil(@summary.time_to_full_charge) do %>
             <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
-            <% finish_dt = Timex.add(Timex.now(), Timex.Duration.from_hours(@summary.time_to_full_charge)) |> Timex.local() %>
-            <% eta_str = Timex.format!(finish_dt, "%H:%M", :strftime) %>
+            <% finish_dt =
+              DateTime.utc_now()
+              |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
+              |> DateTime.shift_zone!(@tz) %>
+            <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
             <div class="ch-stat">
               <div class="ch-label">Remaining</div>
               <div class="ch-value ch-value-sm"><%= remaining_str %></div>

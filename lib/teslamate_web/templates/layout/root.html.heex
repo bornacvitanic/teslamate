@@ -128,25 +128,6 @@
                 </div>
               </div>
             <% end %>
-            <div class="navbar-item has-dropdown is-hoverable">
-              <a class="navbar-link is-arrowless">
-                <span class="icon"><i class="mdi mdi-palette-outline"></i></span>&nbsp;<span>Style</span>
-              </a>
-              <div class="navbar-dropdown is-boxed">
-                <%= for {label, slug} <- [
-                  {"Default", "default"},
-                  {"Tesla app", "tesla"},
-                  {"Linear", "linear"},
-                  {"Vercel", "vercel"},
-                  {"Raycast", "raycast"},
-                  {"Supabase", "supabase"},
-                  {"Plausible", "plausible"},
-                  {"Apple Health", "apple-health"}
-                ] do %>
-                  <a class="navbar-item" href={"/?style=#{slug}"}><%= label %></a>
-                <% end %>
-              </div>
-            </div>
             <.link
               navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)}
               class="navbar-item  mr-5"
