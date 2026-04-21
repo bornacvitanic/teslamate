@@ -30,29 +30,29 @@
       </div>
     </div>
         <div class="card-map">
-      <figure  
-        id={"map_#{@car.id}_container"}  
-        data-id={@car.id}  
-        data-marker="arrow"  
-        data-zoom="1"  
-        data-geofences={@geofences_json}  
-        data-home-geofence-id={@home_geofence_id}  
-        phx-hook="SimpleMap"  
-        phx-update="ignore"  
-      >  
-        <div id={"map_#{@car.id}"} class="map" style="height: 280px; position: relative;">  
-          <div class="spinner">  
-            <span class="is-loading" />  
-          </div>  
-        </div>  
-      </figure>  
-      <input  
-        id={"position_#{@car.id}"}  
-        type="text"  
-        value={"#{@summary.latitude},#{@summary.longitude},#{@summary.heading}"}  
-        class="is-hidden"  
-        phx-hook="TriggerChange"  
-        disabled  
+      <figure
+        id={"map_#{@car.id}_container"}
+        data-id={@car.id}
+        data-marker="arrow"
+        data-zoom="1"
+        data-geofences={@geofences_json}
+        data-home-geofence-id={@home_geofence_id}
+        phx-hook="SimpleMap"
+        phx-update="ignore"
+      >
+        <div id={"map_#{@car.id}"} class="map" style="height: 280px; position: relative;">
+          <div class="spinner">
+            <span class="is-loading" />
+          </div>
+        </div>
+      </figure>
+      <input
+        id={"position_#{@car.id}"}
+        type="text"
+        value={"#{@summary.latitude},#{@summary.longitude},#{@summary.heading}"}
+        class="is-hidden"
+        phx-hook="TriggerChange"
+        disabled
       />
         </div>
     <div class="icons-row">
