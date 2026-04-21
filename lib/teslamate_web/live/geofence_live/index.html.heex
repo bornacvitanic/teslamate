@@ -1,3 +1,18 @@
+<aside class="geofences-map-aside">
+  <div
+    id="geofences-map"
+    class="geofences-map"
+    phx-hook="GeofencesMap"
+    phx-update="ignore"
+    data-geofences={@geofences_json}
+    data-selected-id={@selected_id}
+  >
+  </div>
+  <p class="has-text-grey is-size-7 mt-2">
+    Click a row to zoom to it. Click again to deselect.
+  </p>
+</aside>
+
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
     <li><.link navigate={~p"/"}><%= gettext("Home") %></.link></li>
@@ -17,95 +32,76 @@
   </span>
 </.link>
 
-<div class="geofences-layout">
-  <div class="geofences-table-wrap">
-    <table class="table is-fullwidth geofences-table">
-      <thead class="is-hidden-mobile">
-        <tr>
-          <th><%= gettext("Name") %></th>
-          <th><%= gettext("Cost") %></th>
-          <th>Visits</th>
-          <th><%= gettext("Radius") %></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody style="font-variant-numeric: tabular-nums;">
-        <%= for geofence <- @geofences do %>
-          <tr
-            class={[
-              "geofences-row",
-              @selected_id == geofence.id && "is-selected-geofence"
-            ]}
-            phx-click="select"
-            phx-value-id={geofence.id}
-          >
-            <td class="has-text-weight-medium is-truncated" style="min-width: 0; max-width: 220px">
-              <%= geofence.name %>
-            </td>
-            <td class="is-hidden-mobile has-text-weight-light"><%= format_cost(geofence) %></td>
-            <% drives = Map.get(@drive_counts, geofence.id, 0) %>
-            <% charges = Map.get(@charge_counts, geofence.id, 0) %>
-            <td class="is-hidden-mobile has-text-weight-light">
-              <%= if drives + charges == 0 do %>
-                <span class="has-text-grey-light">—</span>
-              <% else %>
-                <span title={"#{drives} drives · #{charges} charges"}>
-                  <span class="icon is-small"><i class="mdi mdi-car"></i></span>
-                  <%= drives %>
-                  <span class="icon is-small ml-2"><i class="mdi mdi-ev-station"></i></span>
-                  <%= charges %>
-                </span>
-              <% end %>
-            </td>
-            <td class="is-hidden-mobile has-text-weight-light">
-              <%= case @unit_of_length do
-                :ft -> geofence.radius |> Convert.m_to_ft() |> round()
-                :m -> geofence.radius |> round()
-              end %> <%= @unit_of_length %>
-            </td>
-            <td>
-              <div class="field is-grouped is-pulled-right" onclick="event.stopPropagation()">
-                <p class="control">
-                  <.link
-                    navigate={Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form, geofence, [])}
-                    class="button is-info is-small is-inverted is-light"
-                  >
-                    <span class="icon"><span class="mdi mdi-square-edit-outline"></span></span>
-                  </.link>
-                </p>
-                <p class="control">
-                  <%= link(raw("<span class='icon'><span class='mdi mdi-trash-can'></span></span>"),
-                    to: "#",
-                    phx_hook: "ConfirmGeoFenceDeletion",
-                    data: [
-                      id: geofence.id,
-                      msg: gettext("Delete '%{geo_fence}'?", geo_fence: geofence.name)
-                    ],
-                    type: "button",
-                    id: "delete_#{geofence.id}",
-                    class: "button is-danger is-small is-inverted is-light"
-                  ) %>
-                </p>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="geofences-map-wrap">
-    <div
-      id="geofences-map"
-      class="geofences-map"
-      phx-hook="GeofencesMap"
-      phx-update="ignore"
-      data-geofences={@geofences_json}
-      data-selected-id={@selected_id}
-    >
-    </div>
-    <p class="geofences-map-hint has-text-grey is-size-7 mt-2">
-      Click a row to zoom to it on the map. Click again to deselect.
-    </p>
-  </div>
-</div>
+<table class="table is-fullwidth geofences-table">
+  <thead class="is-hidden-mobile">
+    <tr>
+      <th><%= gettext("Name") %></th>
+      <th><%= gettext("Cost") %></th>
+      <th>Visits</th>
+      <th><%= gettext("Radius") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody style="font-variant-numeric: tabular-nums;">
+    <%= for geofence <- @geofences do %>
+      <tr
+        class={[
+          "geofences-row",
+          @selected_id == geofence.id && "is-selected-geofence"
+        ]}
+        phx-click="select"
+        phx-value-id={geofence.id}
+      >
+        <td class="has-text-weight-medium is-truncated" style="min-width: 0; max-width: 220px">
+          <%= geofence.name %>
+        </td>
+        <td class="is-hidden-mobile has-text-weight-light"><%= format_cost(geofence) %></td>
+        <% drives = Map.get(@drive_counts, geofence.id, 0) %>
+        <% charges = Map.get(@charge_counts, geofence.id, 0) %>
+        <td class="is-hidden-mobile has-text-weight-light">
+          <%= if drives + charges == 0 do %>
+            <span class="has-text-grey-light">—</span>
+          <% else %>
+            <span title={"#{drives} drives · #{charges} charges"}>
+              <span class="icon is-small"><i class="mdi mdi-car"></i></span>
+              <%= drives %>
+              <span class="icon is-small ml-2"><i class="mdi mdi-ev-station"></i></span>
+              <%= charges %>
+            </span>
+          <% end %>
+        </td>
+        <td class="is-hidden-mobile has-text-weight-light">
+          <%= case @unit_of_length do
+            :ft -> geofence.radius |> Convert.m_to_ft() |> round()
+            :m -> geofence.radius |> round()
+          end %> <%= @unit_of_length %>
+        </td>
+        <td>
+          <div class="field is-grouped is-pulled-right" onclick="event.stopPropagation()">
+            <p class="control">
+              <.link
+                navigate={Routes.live_path(@socket, TeslaMateWeb.GeoFenceLive.Form, geofence, [])}
+                class="button is-info is-small is-inverted is-light"
+              >
+                <span class="icon"><span class="mdi mdi-square-edit-outline"></span></span>
+              </.link>
+            </p>
+            <p class="control">
+              <%= link(raw("<span class='icon'><span class='mdi mdi-trash-can'></span></span>"),
+                to: "#",
+                phx_hook: "ConfirmGeoFenceDeletion",
+                data: [
+                  id: geofence.id,
+                  msg: gettext("Delete '%{geo_fence}'?", geo_fence: geofence.name)
+                ],
+                type: "button",
+                id: "delete_#{geofence.id}",
+                class: "button is-danger is-small is-inverted is-light"
+              ) %>
+            </p>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -139,7 +139,13 @@ const DirectionArrow = CircleMarker.extend({
 });
 
 function createMap(opts) {
-  const map = new M(opts.elId != null ? `map_${opts.elId}` : "map", opts);
+  const targetId =
+    opts.elementId != null
+      ? opts.elementId
+      : opts.elId != null
+        ? `map_${opts.elId}`
+        : "map";
+  const map = new M(targetId, opts);
 
   // CartoDB basemaps — free, no API key. Positron (light) / DarkMatter (dark)
   // follow the app theme via <html data-theme="...">.
@@ -267,7 +273,7 @@ export const TriggerChange = {
 export const GeofencesMap = {
   mounted() {
     const map = createMap({
-      elId: null,
+      elementId: this.el.id,
       zoomControl: true,
       boxZoom: false,
       doubleClickZoom: true,

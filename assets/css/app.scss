@@ -668,55 +668,53 @@ nav.navbar {
   background-color: transparent !important;
 }
 
-// Geofences page: table + map side by side on tablet+
-.geofences-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  @include mx.tablet {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .geofences-table-wrap {
-    flex: 1 1 60%;
-    min-width: 0;
-  }
-
-  .geofences-map-wrap {
-    flex: 1 1 40%;
-    min-width: 0;
-
-    @include mx.tablet {
-      position: sticky;
-      top: 1rem;
-    }
-  }
+// Geofences page
+//
+// On wide screens the map floats as a fixed side panel to the left of
+// the Bulma container, so the table keeps its original full width.
+// On narrow screens the map stacks normally above everything.
+.geofences-map-aside {
+  margin-bottom: 1.25rem;
 
   .geofences-map {
-    height: 520px;
+    height: 360px;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid hsl(0, 0%, 88%);
     background: hsl(0, 0%, 96%);
   }
+}
 
-  .geofences-table {
-    .geofences-row {
-      cursor: pointer;
-      transition: background 0.12s ease;
+@media (min-width: 1280px) {
+  .geofences-map-aside {
+    position: fixed;
+    left: 1.25rem;
+    top: 5.25rem;
+    width: 320px;
+    margin-bottom: 0;
+    z-index: 5;
+
+    .geofences-map {
+      height: calc(100vh - 7.5rem);
+      max-height: 720px;
     }
-    .geofences-row:hover {
-      background: hsla(0, 0%, 0%, 0.03);
-    }
-    .geofences-row.is-selected-geofence {
-      background: hsla(141, 53%, 53%, 0.12);
-    }
-    .icon.is-small {
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
+  }
+}
+
+.geofences-table {
+  .geofences-row {
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .geofences-row:hover {
+    background: hsla(0, 0%, 0%, 0.03);
+  }
+  .geofences-row.is-selected-geofence {
+    background: hsla(141, 53%, 53%, 0.12);
+  }
+  .icon.is-small {
+    font-size: 0.9rem;
+    vertical-align: middle;
   }
 }
 
