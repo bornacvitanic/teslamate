@@ -1,30 +1,5 @@
 <div class="car card">
-  <div class="card-image">
-    <figure
-      id={"map_#{@car.id}_container"}
-      data-id={@car.id}
-      data-marker="arrow"
-      data-zoom="1"
-      data-geofences={@geofences_json}
-      data-home-geofence-id={@home_geofence_id}
-      phx-hook="SimpleMap"
-      phx-update="ignore"
-    >
-      <div id={"map_#{@car.id}"} class="map" style="height: 280px; position: relative;">
-        <div class="spinner">
-          <span class="is-loading" />
-        </div>
-      </div>
-    </figure>
-    <input
-      id={"position_#{@car.id}"}
-      type="text"
-      value={"#{@summary.latitude},#{@summary.longitude},#{@summary.heading}"}
-      class="is-hidden"
-      phx-hook="TriggerChange"
-      disabled
-    />
-  </div>
+
   <div class="card-content">
     <div class="media is-flex mb-5">
       <div class="media-content">
@@ -54,6 +29,32 @@
         </div>
       </div>
     </div>
+        <div class="card-map">
+      <figure  
+        id={"map_#{@car.id}_container"}  
+        data-id={@car.id}  
+        data-marker="arrow"  
+        data-zoom="1"  
+        data-geofences={@geofences_json}  
+        data-home-geofence-id={@home_geofence_id}  
+        phx-hook="SimpleMap"  
+        phx-update="ignore"  
+      >  
+        <div id={"map_#{@car.id}"} class="map" style="height: 280px; position: relative;">  
+          <div class="spinner">  
+            <span class="is-loading" />  
+          </div>  
+        </div>  
+      </figure>  
+      <input  
+        id={"position_#{@car.id}"}  
+        type="text"  
+        value={"#{@summary.latitude},#{@summary.longitude},#{@summary.heading}"}  
+        class="is-hidden"  
+        phx-hook="TriggerChange"  
+        disabled  
+      />
+        </div>
     <div class="icons-row">
         <span
           class={"spinner has-tooltip-top has-tooltip-left-mobile #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
@@ -228,48 +229,45 @@
 
     <%= if @summary.state == :charging do %>
       <div class="charging-panel">
-        <div class="charging-header">
-          <span class="icon"><i class="mdi mdi-lightning-bolt"></i></span>
-          <span>Charging</span>
+        <div class="charging-row charging-row-main">
+          <span class="charging-lhs">
+            <%= if not is_nil(@summary.charge_limit_soc) do %>
+              Charge limit <%= @summary.charge_limit_soc %>%
+            <% else %>
+              Charging
+            <% end %>
+          </span>
+          <span class="charging-rhs">
+            <%= if not is_nil(@summary.charger_power) do %><%= @summary.charger_power %>kW<% end %>
+            <%= if not is_nil(@summary.charge_energy_added) do %> · +<%= @summary.charge_energy_added %>kWh<% end %>
+            <%= cp = is_map(@widget) && @widget[:charging_power] %>
+            <%= if cp && cp.current && cp.pilot do %> · <%= cp.current %>/<%= cp.pilot %>A<% end %>
+            <%= if cp && cp.voltage do %> · <%= cp.voltage %>V<% end %>
+          </span>
         </div>
-        <div class="charging-grid">
-          <%= unless is_nil(@summary.charger_power) do %>
-            <div class="ch-stat">
-              <div class="ch-label">Power</div>
-              <div class="ch-value"><%= @summary.charger_power %><span class="ch-unit">kW</span></div>
-            </div>
-          <% end %>
-          <%= unless is_nil(@summary.charge_energy_added) do %>
-            <div class="ch-stat">
-              <div class="ch-label">Added</div>
-              <div class="ch-value"><%= @summary.charge_energy_added %><span class="ch-unit">kWh</span></div>
-            </div>
-          <% end %>
-          <%= if not is_nil(@summary.time_to_full_charge) do %>
-            <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
-            <% finish_dt =
-              DateTime.utc_now()
-              |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
-              |> DateTime.shift_zone!(@tz) %>
-            <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
-            <div class="ch-stat">
-              <div class="ch-label">Remaining</div>
-              <div class="ch-value ch-value-sm"><%= remaining_str %></div>
-            </div>
-            <div class="ch-stat">
-              <div class="ch-label">ETA</div>
-              <div class="ch-value"><%= eta_str %></div>
-            </div>
-          <% end %>
-        </div>
+
+        <%= if not is_nil(@summary.time_to_full_charge) do %>
+          <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
+          <% finish_dt =
+            DateTime.utc_now()
+            |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
+            |> DateTime.shift_zone!(@tz) %>
+          <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
+          <div class="charging-row charging-row-eta">
+            <span class="charging-lhs">Remaining <%= remaining_str %></span>
+            <span class="charging-rhs">ETA <%= eta_str %></span>
+          </div>
+        <% end %>
+
         <%= if @summary.plugged_in and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
-          <div class="charging-scheduled">
-            <span class="icon"><i class="mdi mdi-clock-outline"></i></span>
-            Scheduled: <%= tag(:span,
-              data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
-              phx_hook: "LocalTime",
-              id: "scheduled_start_time_#{"#{@car.id}"}"
-            ) %>
+          <div class="charging-row charging-row-scheduled">
+            <span>Scheduled:
+              <%= tag(:span,
+                data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
+                phx_hook: "LocalTime",
+                id: "scheduled_start_time_#{@car.id}".replace(/[#]/, '#')}"
+              ) %>
+            </span>
           </div>
         <% end %>
       </div>
@@ -610,8 +608,12 @@
     <div class="car-footer">
       <div class="car-footer-model">
         <%= cond do
-          not is_nil(@car.marketing_name) -> @car.marketing_name
-          not is_nil(@car.model) -> "Model #{@car.model}"
+          not is_nil(@car.model) and not is_nil(@car.marketing_name) ->
+            "Model #{@car.model} #{@car.marketing_name}"
+          not is_nil(@car.model) and not is_nil(@car.trim_badging) ->
+            "Model #{@car.model} #{@car.trim_badging}"
+          not is_nil(@car.model) ->
+            "Model #{@car.model}"
           true -> @summary.display_name
         end %>
       </div>

@@ -157,16 +157,11 @@
     }
 
     .charging-panel {
-      background: hsla(36, 90%, 55%, 0.1);
-      border-color: hsla(36, 90%, 55%, 0.22);
-      .charging-header { color: hsl(36, 80%, 70%); }
-      .ch-label { color: hsl(36, 40%, 65%); }
-      .ch-value { color: rgba(204, 204, 220, 0.9); }
-      .ch-unit { color: rgba(204, 204, 220, 0.55); }
-      .charging-scheduled {
-        border-top-color: hsla(36, 60%, 50%, 0.3);
-        color: hsl(36, 35%, 70%);
-      }
+      background: rgba(204, 204, 220, 0.06);
+      .charging-row { color: rgba(204, 204, 220, 0.85); }
+      .charging-row-main .charging-rhs { color: rgba(204, 204, 220, 0.6); }
+      .charging-row-eta,
+      .charging-row-scheduled { color: rgba(204, 204, 220, 0.55); }
     }
 
     .env-strip {

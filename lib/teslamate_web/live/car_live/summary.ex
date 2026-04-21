@@ -384,6 +384,9 @@ defmodule TeslaMateWeb.CarLive.Summary do
     cost_per_km_month =
       if month_km_f > 0, do: month_cost_eur / month_km_f, else: nil
 
+    # Live voltage + amperage from the latest charge row of the active session.
+    charging_power = fetch_charging_power_detail(car_id)
+
     # Current mounted tire set (if tyre_mounts table has an open mount)
     tire_info = fetch_tire_info(car_id)
 
@@ -410,8 +413,29 @@ defmodule TeslaMateWeb.CarLive.Summary do
       },
       tire: tire_info,
       battery_health: battery_health,
-      efficiency: efficiency
+      efficiency: efficiency,
+      charging_power: charging_power
     }
+  end
+
+  # Latest voltage/current reading for the currently active charging session,
+  # or nil when the car isn't charging. Uses raw table names because Charge has
+  # no Ecto schema imported in this module.
+  defp fetch_charging_power_detail(car_id) do
+    Repo.one(
+      from c in "charges",
+        join: cp in "charging_processes",
+        on: cp.id == c.charging_process_id,
+        where: cp.car_id == ^car_id and is_nil(cp.end_date),
+        order_by: [desc: c.date],
+        limit: 1,
+        select: %{
+          voltage: c.charger_voltage,
+          current: c.charger_actual_current,
+          phases: c.charger_phases,
+          pilot: c.charger_pilot_current
+        }
+    )
   end
 
   defp fetch_geofences_for_map(car_id) do
