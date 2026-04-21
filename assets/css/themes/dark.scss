@@ -46,11 +46,18 @@
     background: rgba(204, 204, 220, 0.04);
   }
 
+  .geofences-bulk-bar {
+    background: hsla(348, 80%, 55%, 0.12);
+    border-color: hsla(348, 80%, 55%, 0.3);
+    color: hsl(348, 75%, 72%);
+  }
+
   .geofences-table {
     .geofences-row:hover { background: rgba(204, 204, 220, 0.05); }
     .geofences-row.is-selected-geofence {
       background: hsla(141, 53%, 45%, 0.16);
     }
+    thead th[phx-click]:hover { background: rgba(204, 204, 220, 0.05); }
   }
 
   .car {

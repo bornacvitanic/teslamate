@@ -267,9 +267,24 @@ export const TriggerChange = {
   },
 };
 
+// Confirm-before-delete for the bulk action button.
+export const ConfirmBulkDelete = {
+  mounted() {
+    this.el.addEventListener("click", (e) => {
+      const n = this.el.dataset.count || "?";
+      if (!window.confirm(`Delete ${n} geofence${n === "1" ? "" : "s"}?`)) {
+        e.preventDefault();
+        return;
+      }
+      this.pushEvent("delete_selected", {});
+    });
+  },
+};
+
 // Interactive map for the geofences index page — renders all geofences as
 // circles, fly-to's the selected one when the LiveView updates
-// data-selected-id.
+// data-selected-id, and emits map_click on empty-area clicks so the
+// LiveView can navigate to the Create form pre-filled with those coords.
 export const GeofencesMap = {
   mounted() {
     const map = createMap({
@@ -284,6 +299,30 @@ export const GeofencesMap = {
     });
     this._map = map;
     this._circles = {};
+
+    map.on("click", (e) => {
+      this.pushEvent("map_click", {
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+      });
+    });
+
+    // Browser-side file download for Export — triggered by the LiveView
+    // push_event('download_file', ...). Attached here because this hook is
+    // guaranteed to mount on the geofences page.
+    this.handleEvent("download_file", ({ filename, content, mime }) => {
+      const blob = new Blob([content], {
+        type: mime || "application/octet-stream",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
 
     const geofences = JSON.parse(this.el.dataset.geofences || "[]");
     geofences.forEach((gf) => {

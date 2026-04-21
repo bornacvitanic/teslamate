@@ -681,6 +681,39 @@ nav.navbar {
   }
 }
 
+.geofences-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+
+  .geofences-search {
+    flex: 1 1 220px;
+    max-width: 340px;
+    margin-bottom: 0;
+  }
+  .geofences-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+}
+
+.geofences-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: hsla(348, 80%, 58%, 0.08);
+  border: 1px solid hsla(348, 80%, 58%, 0.3);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: hsl(348, 70%, 35%);
+}
+
 .geofences-table {
   .geofences-row {
     cursor: pointer;
@@ -695,6 +728,12 @@ nav.navbar {
   .icon.is-small {
     font-size: 0.9rem;
     vertical-align: middle;
+  }
+  thead th[phx-click] {
+    user-select: none;
+  }
+  thead th[phx-click]:hover {
+    background: hsla(0, 0%, 0%, 0.04);
   }
 }
 
