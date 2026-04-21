@@ -340,65 +340,30 @@ nav.navbar {
     }
   }
 
-  .insight-row {
+  // Stat cards — unified base for Today/Cost/Gear rows.
+  // Variants: .is-good / .is-warn / .is-low for color accents,
+  //           .is-savings for the green lifetime-savings card,
+  //           .stat-value-sm for compact values (e.g. long tire label).
+  .stat-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.5rem;
     padding: 0.25rem 1rem 0.5rem;
   }
-  .insight-card {
+  .stat-card {
     background: hsl(0, 0%, 97%);
     border: 1px solid hsl(0, 0%, 90%);
-    border-radius: 6px;
-    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
 
-    .insight-label {
+    .stat-label {
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: hsl(0, 0%, 45%);
       font-weight: 600;
     }
-    .insight-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.15;
-      margin-top: 0.15rem;
-    }
-    .insight-unit {
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: hsl(0, 0%, 45%);
-    }
-    .insight-sub {
-      font-size: 0.78rem;
-      color: hsl(0, 0%, 50%);
-      margin-top: 0.1rem;
-    }
-  }
-
-  .cost-row,
-  .gear-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 0.5rem;
-    padding: 0.25rem 1rem 0.5rem;
-  }
-  .gear-card {
-    background: hsl(0, 0%, 97%);
-    border: 1px solid hsl(0, 0%, 90%);
-    border-radius: 6px;
-    padding: 0.55rem 0.75rem;
-
-    .gear-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: hsl(0, 0%, 45%);
-      font-weight: 600;
-    }
-    .gear-value {
+    .stat-value {
       font-size: 1.25rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
@@ -406,63 +371,37 @@ nav.navbar {
       margin-top: 0.15rem;
       color: hsl(0, 0%, 15%);
     }
-    .gear-value-sm {
+    .stat-value-sm {
       font-size: 0.9rem;
       font-weight: 600;
       line-height: 1.2;
     }
-    .gear-sub {
+    .stat-unit {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: hsl(0, 0%, 45%);
+    }
+    .stat-sub {
       font-size: 0.75rem;
       color: hsl(0, 0%, 50%);
       margin-top: 0.1rem;
     }
-    &.is-good {
+    &.is-good,
+    &.is-savings {
       background: hsla(141, 53%, 53%, 0.08);
       border-color: hsla(141, 53%, 53%, 0.3);
-      .gear-value { color: hsl(141, 53%, 32%); }
+      .stat-value { color: hsl(141, 53%, 32%); }
     }
+    &.is-savings .stat-label { color: hsl(141, 40%, 40%); }
     &.is-warn {
       background: hsla(36, 90%, 55%, 0.08);
       border-color: hsla(36, 90%, 55%, 0.3);
-      .gear-value { color: hsl(36, 80%, 35%); }
+      .stat-value { color: hsl(36, 80%, 35%); }
     }
     &.is-low {
       background: hsla(348, 80%, 58%, 0.08);
       border-color: hsla(348, 80%, 58%, 0.3);
-      .gear-value { color: hsl(348, 70%, 40%); }
-    }
-  }
-  .cost-card {
-    background: hsl(0, 0%, 97%);
-    border: 1px solid hsl(0, 0%, 90%);
-    border-radius: 6px;
-    padding: 0.55rem 0.75rem;
-
-    .cost-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: hsl(0, 0%, 45%);
-      font-weight: 600;
-    }
-    .cost-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.15;
-      margin-top: 0.15rem;
-      color: hsl(0, 0%, 15%);
-    }
-    .cost-sub {
-      font-size: 0.75rem;
-      color: hsl(0, 0%, 50%);
-      margin-top: 0.1rem;
-    }
-    &.is-savings {
-      background: hsla(141, 53%, 53%, 0.08);
-      border-color: hsla(141, 53%, 53%, 0.3);
-      .cost-value { color: hsl(141, 53%, 32%); }
-      .cost-label { color: hsl(141, 40%, 40%); }
+      .stat-value { color: hsl(348, 70%, 40%); }
     }
   }
 

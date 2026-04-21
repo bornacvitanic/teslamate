@@ -5,6 +5,8 @@
       data-id={@car.id}
       data-marker="arrow"
       data-zoom="1"
+      data-geofences={@geofences_json}
+      data-home-geofence-id={@home_geofence_id}
       phx-hook="SimpleMap"
       phx-update="ignore"
     >
@@ -297,13 +299,13 @@
     <% end %>
 
     <%= if @widget do %>
-      <div class="insight-row">
-        <div class="insight-card">
-          <div class="insight-label">Today</div>
-          <div class="insight-value">
-            <%= @widget.today.km %> <span class="insight-unit">km</span>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Today</div>
+          <div class="stat-value">
+            <%= @widget.today.km %> <span class="stat-unit">km</span>
           </div>
-          <div class="insight-sub">
+          <div class="stat-sub">
             <%= @widget.today.trips %> <%= if @widget.today.trips == 1, do: "trip", else: "trips" %>
             <%= if @widget.today.duration_min && @widget.today.duration_min > 0 do %>
               · <%= @widget.today.duration_min %> min
@@ -312,9 +314,9 @@
         </div>
 
         <%= if @widget.days_since_drive != nil do %>
-          <div class="insight-card">
-            <div class="insight-label">Last drive</div>
-            <div class="insight-value">
+          <div class="stat-card">
+            <div class="stat-label">Last drive</div>
+            <div class="stat-value">
               <%= case @widget.days_since_drive do
                 0 -> "Today"
                 1 -> "Yesterday"
@@ -325,9 +327,9 @@
         <% end %>
 
         <%= if @widget.days_since_charge != nil do %>
-          <div class="insight-card">
-            <div class="insight-label">Last charge</div>
-            <div class="insight-value">
+          <div class="stat-card">
+            <div class="stat-label">Last charge</div>
+            <div class="stat-value">
               <%= case @widget.days_since_charge do
                 0 -> "Today"
                 1 -> "Yesterday"
@@ -337,13 +339,13 @@
           </div>
         <% end %>
         <%= unless is_nil(@summary.odometer) do %>
-          <div class="insight-card">
-            <div class="insight-label">Odometer</div>
-            <div class="insight-value">
+          <div class="stat-card">
+            <div class="stat-label">Odometer</div>
+            <div class="stat-value">
               <%= if @settings.unit_of_length == :mi do %>
-                <%= Convert.km_to_miles(@summary.odometer, 0) %> <span class="insight-unit">mi</span>
+                <%= Convert.km_to_miles(@summary.odometer, 0) %> <span class="stat-unit">mi</span>
               <% else %>
-                <%= round(@summary.odometer) %> <span class="insight-unit">km</span>
+                <%= round(@summary.odometer) %> <span class="stat-unit">km</span>
               <% end %>
             </div>
           </div>
@@ -373,39 +375,39 @@
         </div>
       <% end %>
       <%= if @widget.cost do %>
-        <div class="cost-row">
-          <div class="cost-card">
-            <div class="cost-label">This month</div>
-            <div class="cost-value">€<%= format_eur(@widget.cost.month_eur) %></div>
-            <div class="cost-sub">
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">This month</div>
+            <div class="stat-value">€<%= format_eur(@widget.cost.month_eur) %></div>
+            <div class="stat-sub">
               <%= :erlang.float_to_binary(@widget.cost.month_kwh * 1.0, decimals: 1) %> kWh
               · <%= @widget.cost.month_sessions %> session<%= if @widget.cost.month_sessions == 1, do: "", else: "s" %>
             </div>
           </div>
 
           <%= if @widget.cost.cost_per_km do %>
-            <div class="cost-card">
-              <div class="cost-label">Cost / km</div>
-              <div class="cost-value">€<%= format_eur_km(@widget.cost.cost_per_km) %></div>
-              <div class="cost-sub">this month</div>
+            <div class="stat-card">
+              <div class="stat-label">Cost / km</div>
+              <div class="stat-value">€<%= format_eur_km(@widget.cost.cost_per_km) %></div>
+              <div class="stat-sub">this month</div>
             </div>
           <% end %>
 
           <%= if @widget.cost.savings_lifetime > 0 do %>
-            <div class="cost-card is-savings">
-              <div class="cost-label">Saved vs ICE</div>
-              <div class="cost-value">€<%= format_eur(@widget.cost.savings_lifetime) %></div>
-              <div class="cost-sub">lifetime</div>
+            <div class="stat-card is-savings">
+              <div class="stat-label">Saved vs ICE</div>
+              <div class="stat-value">€<%= format_eur(@widget.cost.savings_lifetime) %></div>
+              <div class="stat-sub">lifetime</div>
             </div>
           <% end %>
         </div>
       <% end %>
-      <div class="gear-row">
+      <div class="stat-row">
         <%= if @widget.tire do %>
-          <div class="gear-card">
-            <div class="gear-label">Tires (<%= @widget.tire.type %>)</div>
-            <div class="gear-value gear-value-sm"><%= @widget.tire.label %></div>
-            <div class="gear-sub">
+          <div class="stat-card">
+            <div class="stat-label">Tires (<%= @widget.tire.type %>)</div>
+            <div class="stat-value stat-value-sm"><%= @widget.tire.label %></div>
+            <div class="stat-sub">
               <%= if @summary.odometer && @widget.tire.odometer_at_mount do %>
                 <%= round(@summary.odometer - @widget.tire.odometer_at_mount) %> km since mount
               <% else %>
@@ -428,10 +430,10 @@
             pct >= 85 -> "is-warn"
             true -> "is-low"
           end %>
-          <div class={"gear-card #{pct_cls}"}>
-            <div class="gear-label">Battery health</div>
-            <div class="gear-value"><%= pct %>%</div>
-            <div class="gear-sub">
+          <div class={"stat-card #{pct_cls}"}>
+            <div class="stat-label">Battery health</div>
+            <div class="stat-value"><%= pct %>%</div>
+            <div class="stat-sub">
               <%= round(health.current_km) %> km est · from <%= round(health.original_km) %> km new
             </div>
           </div>
@@ -445,10 +447,10 @@
             delta > 15 -> "is-low"
             true -> ""
           end %>
-          <div class={"gear-card #{delta_cls}"}>
-            <div class="gear-label">Last drive Wh/km</div>
-            <div class="gear-value"><%= round(eff.last_wh_km) %></div>
-            <div class="gear-sub">
+          <div class={"stat-card #{delta_cls}"}>
+            <div class="stat-label">Last drive Wh/km</div>
+            <div class="stat-value"><%= round(eff.last_wh_km) %></div>
+            <div class="stat-sub">
               lifetime avg <%= round(eff.lifetime_wh_km) %>
               <%= cond do
                 delta > 0 -> " · +#{round(delta)}"

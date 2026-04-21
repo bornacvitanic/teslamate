@@ -141,25 +141,31 @@ const DirectionArrow = CircleMarker.extend({
 function createMap(opts) {
   const map = new M(opts.elId != null ? `map_${opts.elId}` : "map", opts);
 
-  // Detect dark mode to use appropriate tiles
+  // CartoDB basemaps — free, no API key. Positron (light) / DarkMatter (dark)
+  // follow the app theme via <html data-theme="...">.
   const isDarkMode =
     document.documentElement.getAttribute("data-theme") === "dark";
 
-  const osm = new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    className: isDarkMode ? "dark-mode-tiles" : "",
+  const baseUrl = isDarkMode
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
+  const base = new TileLayer(baseUrl, {
+    maxZoom: 20,
+    subdomains: "abcd",
+    attribution: "\u00a9 OpenStreetMap, \u00a9 CARTO",
   });
 
   if (opts.enableHybridLayer) {
     const hybrid = new TileLayer(
-      "http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
+      "https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
       { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] },
     );
 
-    new Control.Layers({ OSM: osm, Hybrid: hybrid }).addTo(map);
+    new Control.Layers({ Base: base, Hybrid: hybrid }).addTo(map);
   }
 
-  map.addLayer(osm);
+  map.addLayer(base);
 
   return map;
 }
@@ -189,6 +195,27 @@ export const SimpleMap = {
 
     map.setView([lat, lng], 17);
     marker.addTo(map);
+
+    // Render all geofence circles. Home (most-used) gets a stronger stroke/fill.
+    try {
+      const geofences = JSON.parse(this.el.dataset.geofences || "[]");
+      const homeId = parseInt(this.el.dataset.homeGeofenceId || "0", 10);
+      geofences.forEach((gf) => {
+        const isHome = gf.id === homeId;
+        new Circle([gf.lat, gf.lng], {
+          radius: gf.radius,
+          color: isHome ? "#00b894" : "#8a94a6",
+          weight: isHome ? 2 : 1,
+          fillColor: isHome ? "#00b894" : "#8a94a6",
+          fillOpacity: isHome ? 0.15 : 0.05,
+          interactive: false,
+        })
+          .bindTooltip(gf.name, { permanent: false, direction: "top" })
+          .addTo(map);
+      });
+    } catch (_) {
+      /* no geofences */
+    }
 
     // Auto-pan follows the car while driving, but pause for 30s after the
     // user drags or zooms so they can explore without being yanked back.

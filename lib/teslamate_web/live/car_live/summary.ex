@@ -8,6 +8,7 @@ defmodule TeslaMateWeb.CarLive.Summary do
   alias TeslaMate.Vehicles.Vehicle.Summary
   alias TeslaMate.Vehicles.Vehicle
   alias TeslaMate.Log.{Drive, ChargingProcess}
+  alias TeslaMate.Locations.GeoFence
   alias TeslaMate.{Vehicles, Convert, Repo}
   alias TeslaMateWeb.Widgets.Weather
 
@@ -38,6 +39,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
       :ok = Vehicles.subscribe_to_fetch(car.id)
     end
 
+    {geofences_json, home_geofence_id} = fetch_geofences_for_map(car.id)
+
     assigns = %{
       car: car,
       summary: summary,
@@ -52,7 +55,9 @@ defmodule TeslaMateWeb.CarLive.Summary do
       loading: false,
       tz: tz,
       widget: nil,
-      weather: :loading
+      weather: :loading,
+      geofences_json: geofences_json,
+      home_geofence_id: home_geofence_id
     }
 
     socket = assign(socket, assigns)
@@ -407,6 +412,36 @@ defmodule TeslaMateWeb.CarLive.Summary do
       battery_health: battery_health,
       efficiency: efficiency
     }
+  end
+
+  defp fetch_geofences_for_map(car_id) do
+    # All geofences, lightweight shape for the map hook
+    geofences =
+      Repo.all(
+        from g in GeoFence,
+          select: %{
+            id: g.id,
+            name: g.name,
+            lat: type(g.latitude, :float),
+            lng: type(g.longitude, :float),
+            radius: g.radius
+          }
+      )
+
+    # Home = geofence with the most drive references (start or end)
+    home_id =
+      Repo.one(
+        from g in GeoFence,
+          left_join: d in Drive,
+          on: d.start_geofence_id == g.id or d.end_geofence_id == g.id,
+          where: is_nil(d.car_id) or d.car_id == ^car_id,
+          group_by: g.id,
+          order_by: [desc: count(d.id)],
+          limit: 1,
+          select: g.id
+      )
+
+    {Jason.encode!(geofences), home_id}
   end
 
   defp fetch_tire_info(car_id) do
