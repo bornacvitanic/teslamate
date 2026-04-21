@@ -470,20 +470,37 @@ nav.navbar {
     text-transform: capitalize;
   }
 
-  // Quick-info icons spread across the width, below the name block.
+  // Quick-info icons — Tesla-app style: big, spread, light gray, no underline.
+  // Spinner stays in its slot (invisible when idle) so layout doesn't shift.
   .icons-row {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem 1.1rem;
-    padding: 0.8rem 1rem;
-    color: hsl(0, 0%, 55%);
+    justify-content: flex-start;
+    gap: 1.6rem;
+    padding: 0.9rem 1.1rem;
+    color: hsl(0, 0%, 58%);
+    font-size: 1.4rem;
+
+    // Neutralize the dotted-underline that bulma-tooltip adds by default.
+    .has-tooltip-top,
+    .has-tooltip-bottom,
+    .has-tooltip-left,
+    .has-tooltip-right,
+    .has-tooltip-left-mobile,
+    [data-tooltip] { border-bottom: none !important; }
 
     > .icon,
     > span,
-    > a { font-size: 1.25rem; }
-    .mdi { font-size: 1.25rem; }
-    .is-hidden { display: none !important; }
+    > a { font-size: 1.4rem; color: inherit; line-height: 1; }
+    // Kill color overrides from Bulma (has-text-grey-dark, has-text-link, etc.)
+    .has-text-grey-dark,
+    .has-text-link,
+    .has-text-danger { color: inherit !important; }
+    .mdi { font-size: 1.4rem; }
+
+    // Keep the sync spinner's slot even when idle (invisible but occupies space).
+    .spinner.is-idle { visibility: hidden; }
+    .spinner.is-syncing { visibility: visible; }
   }
 
   .driving-panel {
@@ -600,6 +617,104 @@ nav.navbar {
     a { color: hsl(0, 0%, 40%); text-decoration: underline; text-decoration-style: dotted; }
     a:hover { color: hsl(210, 80%, 45%); }
   }
+
+  // Tesla-app style menu list: expandable rows.
+  .menu-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0 0;
+    margin: 0 1rem;
+
+    > .menu-row + .menu-row {
+      border-top: 1px solid hsl(0, 0%, 90%);
+    }
+  }
+
+  .menu-row {
+    // native <details>
+    &[open] .menu-chevron { transform: rotate(90deg); }
+  }
+
+  .menu-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 0.25rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+
+    &::-webkit-details-marker { display: none; }
+
+    .menu-icon {
+      color: hsl(0, 0%, 55%);
+      font-size: 1.4rem;
+      flex: 0 0 auto;
+    }
+    .menu-text {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .menu-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(0, 0%, 20%);
+      line-height: 1.2;
+    }
+    .menu-sub {
+      font-size: 0.82rem;
+      color: hsl(0, 0%, 50%);
+      line-height: 1.25;
+      margin-top: 0.1rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .menu-chevron {
+      color: hsl(0, 0%, 65%);
+      font-size: 1.3rem;
+      flex: 0 0 auto;
+      transition: transform 0.2s ease;
+    }
+  }
+
+  .menu-body {
+    padding: 0.25rem 0 1rem;
+    > * + * { margin-top: 0.75rem; }
+  }
+
+  // Footer: model, odometer, firmware at the bottom of the summary card.
+  .car-footer {
+    margin: 1.25rem 1rem 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid hsl(0, 0%, 90%);
+
+    .car-footer-model {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: hsl(0, 0%, 15%);
+      line-height: 1.15;
+    }
+    .car-footer-odometer {
+      font-size: 0.9rem;
+      color: hsl(0, 0%, 45%);
+      font-variant-numeric: tabular-nums;
+      margin-top: 0.2rem;
+    }
+    .car-footer-firmware {
+      margin-top: 0.45rem;
+      font-size: 0.78rem;
+      color: hsl(0, 0%, 55%);
+      a {
+        color: hsl(0, 0%, 40%);
+        text-decoration: underline;
+        text-decoration-style: dotted;
+      }
+      a:hover { color: hsl(210, 80%, 45%); }
+    }
+  }
+
 
   .weather-strip {
     padding: 0.5rem 1rem 0.75rem;

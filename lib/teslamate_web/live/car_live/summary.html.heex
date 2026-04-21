@@ -29,22 +29,6 @@
     <div class="media is-flex mb-5">
       <div class="media-content">
         <p class="title is-5"><%= @summary.display_name %></p>
-        <%= unless is_nil(@car.model) do %>
-          <p class="subtitle is-6 has-text-weight-light">
-            Model <%= @car.model %>
-            <%= if @car.marketing_name != nil do %>
-              <span
-                class="has-tooltip-right has-tooltip-left-mobile"
-                style="border-bottom: none;"
-                data-tooltip={@car.trim_badging}
-              >
-                <%= @car.marketing_name %>
-              </span>
-            <% else %>
-              <%= @car.trim_badging %>
-            <% end %>
-          </p>
-        <% end %>
         <%= if not is_nil(@summary.battery_level) do %>
           <% mb_lvl = @summary.usable_battery_level || @summary.battery_level %>
           <% mb_cls =
@@ -72,7 +56,7 @@
     </div>
     <div class="icons-row">
         <span
-          class={"#{if @fetch_status, do: "", else: "is-hidden "}spinner has-tooltip-top has-tooltip-left-mobile"}
+          class={"spinner has-tooltip-top has-tooltip-left-mobile #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
           data-tooltip={gettext("Fetching vehicle data ...")}
         >
           <span class="is-loading"></span>
@@ -234,282 +218,6 @@
       </div>
 
 
-    <%= if not is_nil(@summary.battery_level) do %>
-      <% lvl = @summary.usable_battery_level || @summary.battery_level %>
-      <% raw_lvl = @summary.battery_level %>
-      <% limit = @summary.charge_limit_soc %>
-      <% range_km =
-        case @settings.preferred_range do
-          :ideal -> @summary.ideal_battery_range_km
-          :rated -> @summary.rated_battery_range_km
-        end %>
-      <% range_str =
-        cond do
-          is_nil(range_km) -> nil
-          @settings.unit_of_length == :mi -> "#{Convert.km_to_miles(range_km, 0)} mi"
-          true -> "#{round(range_km)} km"
-        end %>
-      <% color_class =
-        cond do
-          lvl >= 50 -> "is-good"
-          lvl >= 20 -> "is-warn"
-          true -> "is-low"
-        end %>
-      <div class="battery-hero">
-        <div class={"battery-bar #{color_class} #{if @summary.state == :charging, do: "is-charging", else: ""}"}>
-          <div class="battery-fill" style={"width: #{lvl}%"}></div>
-          <%= if lvl != raw_lvl do %>
-            <div class="battery-reduced" style={"left: #{lvl}%; width: #{raw_lvl - lvl}%"}></div>
-          <% end %>
-          <%= if is_number(limit) and limit < 100 do %>
-            <div class="battery-limit-mark" style={"left: #{limit}%"} title={"Charge limit #{limit}%"}></div>
-          <% end %>
-          <div class="battery-terminal"></div>
-        </div>
-        <div class="battery-readout">
-          <span class="battery-pct"><%= lvl %>%</span>
-          <%= if range_str do %>
-            <span class="battery-range"><%= range_str %></span>
-          <% end %>
-          <%= if is_number(limit) and limit < 100 do %>
-            <span class="battery-limit-text">Limit <%= limit %>%</span>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
-    <%= if not is_nil(@summary.tpms_pressure_fl) and not is_nil(@summary.tpms_pressure_fr)
-        and not is_nil(@summary.tpms_pressure_rl) and not is_nil(@summary.tpms_pressure_rr) do %>
-      <% tire_cls = fn warn -> if warn == true, do: "is-low", else: "is-ok" end %>
-      <div class="tire-panel">
-        <div class={"tire pos-fl #{tire_cls.(@summary.tpms_soft_warning_fl)}"}>
-          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fl, @settings.unit_of_pressure) %></span>
-        </div>
-        <div class={"tire pos-fr #{tire_cls.(@summary.tpms_soft_warning_fr)}"}>
-          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fr, @settings.unit_of_pressure) %></span>
-        </div>
-        <div class="tire-car">
-          <svg class="car-topdown" viewBox="0 0 80 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect class="car-body" x="12" y="14" width="56" height="112" rx="18" ry="22"/>
-            <path class="car-window" d="M 20 40 Q 40 34 60 40 L 56 55 L 24 55 Z"/>
-            <path class="car-window" d="M 20 100 Q 40 106 60 100 L 56 85 L 24 85 Z"/>
-            <rect class="car-wheel" x="4" y="28" width="10" height="18" rx="3"/>
-            <rect class="car-wheel" x="66" y="28" width="10" height="18" rx="3"/>
-            <rect class="car-wheel" x="4" y="94" width="10" height="18" rx="3"/>
-            <rect class="car-wheel" x="66" y="94" width="10" height="18" rx="3"/>
-            <circle class="car-mirror" cx="11" cy="58" r="2.3"/>
-            <circle class="car-mirror" cx="69" cy="58" r="2.3"/>
-          </svg>
-        </div>
-        <div class={"tire pos-rl #{tire_cls.(@summary.tpms_soft_warning_rl)}"}>
-          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rl, @settings.unit_of_pressure) %></span>
-        </div>
-        <div class={"tire pos-rr #{tire_cls.(@summary.tpms_soft_warning_rr)}"}>
-          <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rr, @settings.unit_of_pressure) %></span>
-        </div>
-      </div>
-    <% end %>
-
-    <%= if @widget do %>
-      <div class="stat-row">
-        <div class="stat-card">
-          <div class="stat-label">Today</div>
-          <div class="stat-value">
-            <%= @widget.today.km %> <span class="stat-unit">km</span>
-          </div>
-          <div class="stat-sub">
-            <%= @widget.today.trips %> <%= if @widget.today.trips == 1, do: "trip", else: "trips" %>
-            <%= if @widget.today.duration_min && @widget.today.duration_min > 0 do %>
-              · <%= @widget.today.duration_min %> min
-            <% end %>
-          </div>
-        </div>
-
-        <%= if @widget.days_since_drive != nil do %>
-          <div class="stat-card">
-            <div class="stat-label">Last drive</div>
-            <div class="stat-value">
-              <%= case @widget.days_since_drive do
-                0 -> "Today"
-                1 -> "Yesterday"
-                n -> "#{n}d ago"
-              end %>
-            </div>
-          </div>
-        <% end %>
-
-        <%= if @widget.days_since_charge != nil do %>
-          <div class="stat-card">
-            <div class="stat-label">Last charge</div>
-            <div class="stat-value">
-              <%= case @widget.days_since_charge do
-                0 -> "Today"
-                1 -> "Yesterday"
-                n -> "#{n}d ago"
-              end %>
-            </div>
-          </div>
-        <% end %>
-        <%= unless is_nil(@summary.odometer) do %>
-          <div class="stat-card">
-            <div class="stat-label">Odometer</div>
-            <div class="stat-value">
-              <%= if @settings.unit_of_length == :mi do %>
-                <%= Convert.km_to_miles(@summary.odometer, 0) %> <span class="stat-unit">mi</span>
-              <% else %>
-                <%= round(@summary.odometer) %> <span class="stat-unit">km</span>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-
-      <%= if @widget.last_drive do %>
-        <div class="last-drive-card">
-          <div class="last-drive-header">
-            <span class="icon"><i class="mdi mdi-steering"></i></span>
-            <span>Last drive</span>
-          </div>
-          <div class="last-drive-route">
-            <span class="loc"><%= drive_origin_name(@widget.last_drive) %></span>
-            <span class="arrow">→</span>
-            <span class="loc"><%= drive_endpoint_name(@widget.last_drive) %></span>
-          </div>
-          <div class="last-drive-stats">
-            <%= if @widget.last_drive.distance do %>
-              <span><%= round(@widget.last_drive.distance) %> km</span>
-            <% end %>
-            <%= if @widget.last_drive.duration_min do %>
-              <span>·</span>
-              <span><%= @widget.last_drive.duration_min %> min</span>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-      <%= if @widget.cost do %>
-        <div class="stat-row">
-          <div class="stat-card">
-            <div class="stat-label">This month</div>
-            <div class="stat-value">€<%= format_eur(@widget.cost.month_eur) %></div>
-            <div class="stat-sub">
-              <%= :erlang.float_to_binary(@widget.cost.month_kwh * 1.0, decimals: 1) %> kWh
-              · <%= @widget.cost.month_sessions %> session<%= if @widget.cost.month_sessions == 1, do: "", else: "s" %>
-            </div>
-          </div>
-
-          <%= if @widget.cost.cost_per_km do %>
-            <div class="stat-card">
-              <div class="stat-label">Cost / km</div>
-              <div class="stat-value">€<%= format_eur_km(@widget.cost.cost_per_km) %></div>
-              <div class="stat-sub">this month</div>
-            </div>
-          <% end %>
-
-          <%= if @widget.cost.savings_lifetime > 0 do %>
-            <div class="stat-card is-savings">
-              <div class="stat-label">Saved vs ICE</div>
-              <div class="stat-value">€<%= format_eur(@widget.cost.savings_lifetime) %></div>
-              <div class="stat-sub">lifetime</div>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-      <div class="stat-row">
-        <%= if @widget.tire do %>
-          <div class="stat-card">
-            <div class="stat-label">Tires (<%= @widget.tire.type %>)</div>
-            <div class="stat-value stat-value-sm"><%= @widget.tire.label %></div>
-            <div class="stat-sub">
-              <%= if @summary.odometer && @widget.tire.odometer_at_mount do %>
-                <%= round(@summary.odometer - @widget.tire.odometer_at_mount) %> km since mount
-              <% else %>
-                mounted
-                <%= tag(:span,
-                  data: [date: @widget.tire.mounted_at |> DateTime.to_iso8601()],
-                  phx_hook: "LocalTime",
-                  id: "tire_mounted_#{@car.id}"
-                ) %>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-
-        <%= if @widget.battery_health do %>
-          <% health = @widget.battery_health %>
-          <% pct = round(health.health_pct) %>
-          <% pct_cls = cond do
-            pct >= 92 -> "is-good"
-            pct >= 85 -> "is-warn"
-            true -> "is-low"
-          end %>
-          <div class={"stat-card #{pct_cls}"}>
-            <div class="stat-label">Battery health</div>
-            <div class="stat-value"><%= pct %>%</div>
-            <div class="stat-sub">
-              <%= round(health.current_km) %> km est · from <%= round(health.original_km) %> km new
-            </div>
-          </div>
-        <% end %>
-
-        <%= if @widget.efficiency && @widget.efficiency.last_wh_km do %>
-          <% eff = @widget.efficiency %>
-          <% delta = eff.last_wh_km - eff.lifetime_wh_km %>
-          <% delta_cls = cond do
-            delta < -5 -> "is-good"
-            delta > 15 -> "is-low"
-            true -> ""
-          end %>
-          <div class={"stat-card #{delta_cls}"}>
-            <div class="stat-label">Last drive Wh/km</div>
-            <div class="stat-value"><%= round(eff.last_wh_km) %></div>
-            <div class="stat-sub">
-              lifetime avg <%= round(eff.lifetime_wh_km) %>
-              <%= cond do
-                delta > 0 -> " · +#{round(delta)}"
-                delta < 0 -> " · #{round(delta)}"
-                true -> ""
-              end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <div class="weather-strip">
-      <div class="weather-title">
-        <span class="icon"><i class="mdi mdi-weather-partly-cloudy"></i></span>
-        <span>7-day forecast</span>
-      </div>
-      <%= case @weather do %>
-        <% {:ok, days} -> %>
-          <div class="weather-days">
-            <%= for day <- days do %>
-              <% {icon_cls, label} = TeslaMateWeb.Widgets.Weather.icon_and_label(day.code) %>
-              <div class="weather-day" title={label}>
-                <div class="wd-name"><%= Calendar.strftime(day.date, "%a") %></div>
-                <span class={"icon mdi #{icon_cls}"}></span>
-                <div class="wd-temps">
-                  <span class="wd-tmax"><%= round(day.t_max) %>°</span>
-                  <span class="wd-tmin"><%= round(day.t_min) %>°</span>
-                </div>
-                <%= if day.precip_mm && day.precip_mm >= 0.1 do %>
-                  <div class="wd-precip">
-                    <span class="icon is-small"><i class="mdi mdi-water"></i></span>
-                    <%= :erlang.float_to_binary(day.precip_mm * 1.0, decimals: 1) %>mm
-                  </div>
-                <% else %>
-                  <div class="wd-precip wd-dry">—</div>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        <% :loading -> %>
-          <div class="weather-status">Loading forecast…</div>
-        <% :error -> %>
-          <div class="weather-status is-offline">Forecast unavailable</div>
-      <% end %>
-    </div>
-
     <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
       <div class="driving-panel">
         <span class="icon"><i class="mdi mdi-speedometer"></i></span>
@@ -560,44 +268,375 @@
             Scheduled: <%= tag(:span,
               data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
               phx_hook: "LocalTime",
-              id: "scheduled_start_time_#{@car.id}"
+              id: "scheduled_start_time_#{"#{@car.id}"}"
             ) %>
           </div>
         <% end %>
       </div>
     <% end %>
 
-    <%= if (not is_nil(@summary.outside_temp) or not is_nil(@summary.inside_temp)) and (@summary.state not in [:asleep, :offline, :suspended] or DateTime.diff(DateTime.utc_now(), @summary.since) < 30*60) do %>
-      <div class="env-strip">
-        <%= unless is_nil(@summary.outside_temp) do %>
-          <span class="env-item">
-            <span class="icon"><i class="mdi mdi-thermometer"></i></span>
-            <span class="env-label">Outside</span>
-            <span class="env-value"><%= format_temp(@summary.outside_temp, @settings.unit_of_temperature) %></span>
-          </span>
-        <% end %>
-        <%= unless is_nil(@summary.inside_temp) do %>
-          <span class="env-item">
-            <span class="icon"><i class="mdi mdi-home-thermometer-outline"></i></span>
-            <span class="env-label">Inside</span>
-            <span class="env-value"><%= format_temp(@summary.inside_temp, @settings.unit_of_temperature) %></span>
-          </span>
-        <% end %>
-      </div>
-    <% end %>
+    <div class="menu-list">
+      <details class="menu-row">
+        <summary class="menu-summary">
+          <span class="menu-icon icon"><i class="mdi mdi-car-cog"></i></span>
+          <div class="menu-text">
+            <div class="menu-title">Controls</div>
+            <div class="menu-sub">
+              <%= cond do
+                is_map(@widget) && @widget.tire && @summary.odometer ->
+                  "#{@widget.tire.label} · #{round(@summary.odometer - @widget.tire.odometer_at_mount)} km since mount"
+                is_map(@widget) && @widget.tire ->
+                  @widget.tire.label
+                true -> "Tire pressures"
+              end %>
+            </div>
+          </div>
+          <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
+        </summary>
+        <div class="menu-body">
+          <%= if not is_nil(@summary.tpms_pressure_fl) and not is_nil(@summary.tpms_pressure_fr)
+              and not is_nil(@summary.tpms_pressure_rl) and not is_nil(@summary.tpms_pressure_rr) do %>
+            <% tire_cls = fn warn -> if warn == true, do: "is-low", else: "is-ok" end %>
+            <div class="tire-panel">
+              <div class={"tire pos-fl #{tire_cls.(@summary.tpms_soft_warning_fl)}"}>
+                <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fl, @settings.unit_of_pressure) %></span>
+              </div>
+              <div class={"tire pos-fr #{tire_cls.(@summary.tpms_soft_warning_fr)}"}>
+                <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_fr, @settings.unit_of_pressure) %></span>
+              </div>
+              <div class="tire-car">
+                <svg class="car-topdown" viewBox="0 0 80 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect class="car-body" x="12" y="14" width="56" height="112" rx="18" ry="22"/>
+                  <path class="car-window" d="M 20 40 Q 40 34 60 40 L 56 55 L 24 55 Z"/>
+                  <path class="car-window" d="M 20 100 Q 40 106 60 100 L 56 85 L 24 85 Z"/>
+                  <rect class="car-wheel" x="4" y="28" width="10" height="18" rx="3"/>
+                  <rect class="car-wheel" x="66" y="28" width="10" height="18" rx="3"/>
+                  <rect class="car-wheel" x="4" y="94" width="10" height="18" rx="3"/>
+                  <rect class="car-wheel" x="66" y="94" width="10" height="18" rx="3"/>
+                  <circle class="car-mirror" cx="11" cy="58" r="2.3"/>
+                  <circle class="car-mirror" cx="69" cy="58" r="2.3"/>
+                </svg>
+              </div>
+              <div class={"tire pos-rl #{tire_cls.(@summary.tpms_soft_warning_rl)}"}>
+                <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rl, @settings.unit_of_pressure) %></span>
+              </div>
+              <div class={"tire pos-rr #{tire_cls.(@summary.tpms_soft_warning_rr)}"}>
+                <span class="tire-val"><%= format_tpms(@summary.tpms_pressure_rr, @settings.unit_of_pressure) %></span>
+              </div>
+            </div>
+          <% else %>
+            <p class="has-text-grey is-size-7">Tire pressures unavailable.</p>
+          <% end %>
+        </div>
+      </details>
 
-    <%= unless is_nil(@summary.version) do %>
-      <div class="version-footer">
-        <span class="vf-label">Firmware</span>
-        <%= link(@summary.version,
-          to: "https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes",
-          target: "_blank",
-          rel: "noopener noreferrer"
-        ) %>
-      </div>
-    <% end %>
+      <details class="menu-row">
+        <summary class="menu-summary">
+          <span class="menu-icon icon"><i class="mdi mdi-thermostat"></i></span>
+          <div class="menu-text">
+            <div class="menu-title">Climate</div>
+            <div class="menu-sub">
+              <%= cond do
+                not is_nil(@summary.inside_temp) and not is_nil(@summary.outside_temp) ->
+                  "Inside #{format_temp(@summary.inside_temp, @settings.unit_of_temperature)} · Outside #{format_temp(@summary.outside_temp, @settings.unit_of_temperature)}"
+                not is_nil(@summary.outside_temp) ->
+                  "Outside #{format_temp(@summary.outside_temp, @settings.unit_of_temperature)}"
+                not is_nil(@summary.inside_temp) ->
+                  "Inside #{format_temp(@summary.inside_temp, @settings.unit_of_temperature)}"
+                true -> "Weather forecast"
+              end %>
+            </div>
+          </div>
+          <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
+        </summary>
+        <div class="menu-body">
+          <div class="weather-strip">
+            <%= case @weather do %>
+              <% {:ok, days} -> %>
+                <div class="weather-days">
+                  <%= for day <- days do %>
+                    <% {icon_cls, label} = TeslaMateWeb.Widgets.Weather.icon_and_label(day.code) %>
+                    <div class="weather-day" title={label}>
+                      <div class="wd-name"><%= Calendar.strftime(day.date, "%a") %></div>
+                      <span class={"icon mdi #{icon_cls}"}></span>
+                      <div class="wd-temps">
+                        <span class="wd-tmax"><%= round(day.t_max) %>°</span>
+                        <span class="wd-tmin"><%= round(day.t_min) %>°</span>
+                      </div>
+                      <%= if day.precip_mm && day.precip_mm >= 0.1 do %>
+                        <div class="wd-precip">
+                          <span class="icon is-small"><i class="mdi mdi-water"></i></span>
+                          <%= :erlang.float_to_binary(day.precip_mm * 1.0, decimals: 1) %>mm
+                        </div>
+                      <% else %>
+                        <div class="wd-precip wd-dry">—</div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              <% :loading -> %>
+                <div class="weather-status">Loading forecast…</div>
+              <% :error -> %>
+                <div class="weather-status is-offline">Forecast unavailable</div>
+            <% end %>
+          </div>
+        </div>
+      </details>
 
-    <div class="content">
+      <details class="menu-row">
+        <summary class="menu-summary">
+          <span class="menu-icon icon"><i class="mdi mdi-map-marker-outline"></i></span>
+          <div class="menu-text">
+            <div class="menu-title">Location</div>
+            <div class="menu-sub">
+              <%= cond do
+                @summary.state == :driving -> "On the road"
+                is_map(@widget) && @widget.last_drive && drive_endpoint_name(@widget.last_drive) ->
+                  "At #{drive_endpoint_name(@widget.last_drive)}"
+                true -> "See map"
+              end %>
+            </div>
+          </div>
+          <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
+        </summary>
+        <div class="menu-body">
+          <%= if is_map(@widget) and @widget.last_drive do %>
+            <div class="last-drive-card">
+              <div class="last-drive-header">
+                <span class="icon"><i class="mdi mdi-steering"></i></span>
+                <span>Last drive</span>
+              </div>
+              <div class="last-drive-route">
+                <span class="loc"><%= drive_origin_name(@widget.last_drive) %></span>
+                <span class="arrow">→</span>
+                <span class="loc"><%= drive_endpoint_name(@widget.last_drive) %></span>
+              </div>
+              <div class="last-drive-stats">
+                <%= if @widget.last_drive.distance do %>
+                  <span><%= round(@widget.last_drive.distance) %> km</span>
+                <% end %>
+                <%= if @widget.last_drive.duration_min do %>
+                  <span>·</span>
+                  <span><%= @widget.last_drive.duration_min %> min</span>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <p class="has-text-grey is-size-7">No last drive recorded.</p>
+          <% end %>
+        </div>
+      </details>
+
+      <details class="menu-row">
+        <summary class="menu-summary">
+          <span class="menu-icon icon"><i class="mdi mdi-ev-station"></i></span>
+          <div class="menu-text">
+            <div class="menu-title">Charging</div>
+            <div class="menu-sub">
+              <%= cond do
+                @summary.state == :charging and not is_nil(@summary.battery_level) ->
+                  "Charging · #{@summary.battery_level}%"
+                @summary.plugged_in == true and not is_nil(@summary.battery_level) ->
+                  "Plugged in · #{@summary.battery_level}%"
+                not is_nil(@summary.battery_level) ->
+                  "#{@summary.battery_level}%"
+                true -> "Battery"
+              end %>
+            </div>
+          </div>
+          <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
+        </summary>
+        <div class="menu-body">
+          <%= if not is_nil(@summary.battery_level) do %>
+            <% lvl = @summary.usable_battery_level || @summary.battery_level %>
+            <% raw_lvl = @summary.battery_level %>
+            <% limit = @summary.charge_limit_soc %>
+            <% range_km =
+              case @settings.preferred_range do
+                :ideal -> @summary.ideal_battery_range_km
+                :rated -> @summary.rated_battery_range_km
+              end %>
+            <% range_str =
+              cond do
+                is_nil(range_km) -> nil
+                @settings.unit_of_length == :mi -> "#{Convert.km_to_miles(range_km, 0)} mi"
+                true -> "#{round(range_km)} km"
+              end %>
+            <% color_class =
+              cond do
+                lvl >= 50 -> "is-good"
+                lvl >= 20 -> "is-warn"
+                true -> "is-low"
+              end %>
+            <div class="battery-hero">
+              <div class={"battery-bar #{color_class} #{if @summary.state == :charging, do: "is-charging", else: ""}"}>
+                <div class="battery-fill" style={"width: #{lvl}%"}></div>
+                <%= if lvl != raw_lvl do %>
+                  <div class="battery-reduced" style={"left: #{lvl}%; width: #{raw_lvl - lvl}%"}></div>
+                <% end %>
+                <%= if is_number(limit) and limit < 100 do %>
+                  <div class="battery-limit-mark" style={"left: #{limit}%"} title={"Charge limit #{limit}%"}></div>
+                <% end %>
+                <div class="battery-terminal"></div>
+              </div>
+              <div class="battery-readout">
+                <span class="battery-pct"><%= lvl %>%</span>
+                <%= if range_str do %><span class="battery-range"><%= range_str %></span><% end %>
+                <%= if is_number(limit) and limit < 100 do %>
+                  <span class="battery-limit-text">Limit <%= limit %>%</span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <%= if is_map(@widget) and @widget.cost do %>
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-label">This month</div>
+                <div class="stat-value">€<%= format_eur(@widget.cost.month_eur) %></div>
+                <div class="stat-sub">
+                  <%= :erlang.float_to_binary(@widget.cost.month_kwh * 1.0, decimals: 1) %> kWh · <%= @widget.cost.month_sessions %> session<%= if @widget.cost.month_sessions == 1, do: "", else: "s" %>
+                </div>
+              </div>
+              <%= if @widget.cost.cost_per_km do %>
+                <div class="stat-card">
+                  <div class="stat-label">Cost / 100 km</div>
+                  <div class="stat-value">€<%= format_eur(@widget.cost.cost_per_km * 100.0) %></div>
+                  <div class="stat-sub">this month</div>
+                </div>
+              <% end %>
+              <%= if @widget.cost.savings_lifetime > 0 do %>
+                <div class="stat-card is-savings">
+                  <div class="stat-label">Saved vs ICE</div>
+                  <div class="stat-value">€<%= format_eur(@widget.cost.savings_lifetime) %></div>
+                  <div class="stat-sub">lifetime</div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <%= if is_map(@widget) and @widget.battery_health do %>
+            <% health = @widget.battery_health %>
+            <% pct = round(health.health_pct) %>
+            <% pct_cls = cond do
+              pct >= 92 -> "is-good"
+              pct >= 85 -> "is-warn"
+              true -> "is-low"
+            end %>
+            <div class="stat-row">
+              <div class={"stat-card #{pct_cls}"}>
+                <div class="stat-label">Battery health</div>
+                <div class="stat-value"><%= pct %>%</div>
+                <div class="stat-sub">
+                  <%= round(health.current_km) %> km est · from <%= round(health.original_km) %> km new
+                </div>
+              </div>
+              <%= if is_map(@widget) and @widget.efficiency && @widget.efficiency.last_wh_km do %>
+                <% eff = @widget.efficiency %>
+                <% delta = eff.last_wh_km - eff.lifetime_wh_km %>
+                <% delta_cls = cond do
+                  delta < -5 -> "is-good"
+                  delta > 15 -> "is-low"
+                  true -> ""
+                end %>
+                <div class={"stat-card #{delta_cls}"}>
+                  <div class="stat-label">Last drive Wh/km</div>
+                  <div class="stat-value"><%= round(eff.last_wh_km) %></div>
+                  <div class="stat-sub">
+                    lifetime avg <%= round(eff.lifetime_wh_km) %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </details>
+
+      <details class="menu-row">
+        <summary class="menu-summary">
+          <span class="menu-icon icon"><i class="mdi mdi-chart-timeline-variant"></i></span>
+          <div class="menu-text">
+            <div class="menu-title">Trip Stats</div>
+            <div class="menu-sub">
+              <%= cond do
+                is_map(@widget) && @widget.today && @widget.today.km > 0 ->
+                  "#{@widget.today.km} km today · #{@widget.today.trips} trip#{if @widget.today.trips == 1, do: "", else: "s"}"
+                true -> "Drives, charges, last activity"
+              end %>
+            </div>
+          </div>
+          <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
+        </summary>
+        <div class="menu-body">
+          <%= if is_map(@widget) do %>
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-label">Today</div>
+                <div class="stat-value"><%= @widget.today.km %> <span class="stat-unit">km</span></div>
+                <div class="stat-sub">
+                  <%= @widget.today.trips %> <%= if @widget.today.trips == 1, do: "trip", else: "trips" %><%= if @widget.today.duration_min && @widget.today.duration_min > 0 do %> · <%= @widget.today.duration_min %> min<% end %>
+                </div>
+              </div>
+              <%= if @widget.days_since_drive != nil do %>
+                <div class="stat-card">
+                  <div class="stat-label">Last drive</div>
+                  <div class="stat-value">
+                    <%= case @widget.days_since_drive do
+                      0 -> "Today"
+                      1 -> "Yesterday"
+                      n -> "#{n}d ago"
+                    end %>
+                  </div>
+                </div>
+              <% end %>
+              <%= if @widget.days_since_charge != nil do %>
+                <div class="stat-card">
+                  <div class="stat-label">Last charge</div>
+                  <div class="stat-value">
+                    <%= case @widget.days_since_charge do
+                      0 -> "Today"
+                      1 -> "Yesterday"
+                      n -> "#{n}d ago"
+                    end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </details>
+    </div>
+
+    <div class="car-footer">
+      <div class="car-footer-model">
+        <%= cond do
+          not is_nil(@car.marketing_name) -> @car.marketing_name
+          not is_nil(@car.model) -> "Model #{@car.model}"
+          true -> @summary.display_name
+        end %>
+      </div>
+      <%= if not is_nil(@summary.odometer) do %>
+        <div class="car-footer-odometer">
+          <%= if @settings.unit_of_length == :mi do %>
+            <%= Convert.km_to_miles(@summary.odometer, 0) %> mi
+          <% else %>
+            <%= round(@summary.odometer) %> km
+          <% end %>
+        </div>
+      <% end %>
+      <%= unless is_nil(@summary.version) do %>
+        <div class="car-footer-firmware">
+          Software:
+          <%= link(@summary.version,
+            to: "https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes",
+            target: "_blank",
+            rel: "noopener noreferrer"
+          ) %>
+        </div>
+      <% end %>
+    </div>
+
+        <div class="content">
       <%= cond do
         not is_nil(@error) ->
           link(@error,
