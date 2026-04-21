@@ -141,17 +141,13 @@
       }
     }
 
-    .state-pill {
-      background: rgba(204, 204, 220, 0.08);
-      color: rgba(204, 204, 220, 0.8);
-      &.state-online   { background: hsla(141, 53%, 50%, 0.18); color: hsl(141, 53%, 70%); }
-      &.state-driving  { background: hsla(210, 80%, 55%, 0.2); color: hsl(210, 80%, 72%); }
-      &.state-charging { background: hsla(36,  90%, 55%, 0.22); color: hsl(36,  90%, 70%); }
-      &.state-updating { background: hsla(340, 70%, 55%, 0.2); color: hsl(340, 70%, 72%); }
-      &.state-asleep,
-      &.state-suspended { background: hsla(260, 40%, 60%, 0.2); color: hsl(260, 40%, 75%); }
-      &.state-offline { background: rgba(204, 204, 220, 0.1); color: rgba(204, 204, 220, 0.55); }
-    }
+    .mini-battery { color: hsl(141, 53%, 65%); }
+    .mini-battery.is-warn { color: hsl(36, 90%, 65%); }
+    .mini-battery.is-low { color: hsl(348, 80%, 70%); }
+
+    .status-line { color: rgba(204, 204, 220, 0.6); }
+
+    .icons-row { color: rgba(204, 204, 220, 0.55); }
 
     .driving-panel {
       background: hsla(210, 80%, 55%, 0.12);

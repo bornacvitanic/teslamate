@@ -45,8 +45,32 @@
             <% end %>
           </p>
         <% end %>
+        <%= if not is_nil(@summary.battery_level) do %>
+          <% mb_lvl = @summary.usable_battery_level || @summary.battery_level %>
+          <% mb_cls =
+            cond do
+              mb_lvl >= 50 -> "is-good"
+              mb_lvl >= 20 -> "is-warn"
+              true -> "is-low"
+            end %>
+          <div class={"mini-battery #{mb_cls}"}>
+            <svg class="mini-battery-icon" viewBox="0 0 26 14" aria-hidden="true">
+              <rect x="0.5" y="0.5" width="22" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1"/>
+              <rect x="23.5" y="4.5" width="2.5" height="5" rx="1" fill="currentColor"/>
+              <rect x="2" y="2" width={"#{:erlang.float_to_binary(19.0 * mb_lvl / 100.0, decimals: 2)}"} height="10" rx="1" fill="currentColor"/>
+            </svg>
+            <span class="mini-battery-pct"><%= mb_lvl %>%</span>
+            <%= if @summary.state == :charging do %>
+              <span class="mini-battery-bolt icon is-small"><i class="mdi mdi-lightning-bolt"></i></span>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="status-line">
+          <%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %>
+        </div>
       </div>
-      <div class="icons ml-5">
+    </div>
+    <div class="icons-row">
         <span
           class={"#{if @fetch_status, do: "", else: "is-hidden "}spinner has-tooltip-top has-tooltip-left-mobile"}
           data-tooltip={gettext("Fetching vehicle data ...")}
@@ -208,20 +232,8 @@
           </span>
         <% end %>
       </div>
-    </div>
 
 
-    <div class={"state-pill-row"}>
-      <div class={"state-pill state-#{@summary.state}"}>
-        <span class="state-dot"></span>
-        <span class="state-text"><%= @translate_state.(@summary.state) %></span>
-        <%= if @duration do %>
-          <span class="state-duration">
-            for <%= format_duration(@duration) %>
-          </span>
-        <% end %>
-      </div>
-    </div>
     <%= if not is_nil(@summary.battery_level) do %>
       <% lvl = @summary.usable_battery_level || @summary.battery_level %>
       <% raw_lvl = @summary.battery_level %>
