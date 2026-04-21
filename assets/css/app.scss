@@ -911,9 +911,58 @@ main.section {
 
 // --- TESLA app: rounded, high-contrast, red-accented driving panel ---
 [data-card-style="tesla"] {
+  body {
+    font-family: "Inter", "Helvetica Neue", -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.005em;
+    background: #f5f5f7;
+  }
+
+  .navbar.is-dark,
+  .navbar {
+    background: #ffffff !important;
+    color: hsl(0, 0%, 15%);
+    border-bottom: 1px solid hsl(0, 0%, 90%);
+    box-shadow: none;
+
+    .navbar-brand a.navbar-item,
+    a.navbar-item,
+    a.navbar-link {
+      color: hsl(0, 0%, 15%) !important;
+      font-weight: 500;
+      letter-spacing: -0.005em;
+    }
+    .navbar-brand a.navbar-item { font-weight: 700; letter-spacing: -0.02em; }
+    .navbar-item:hover,
+    .navbar-link:hover {
+      background: hsl(0, 0%, 96%) !important;
+    }
+    .navbar-dropdown {
+      background: #ffffff !important;
+      border: 1px solid hsl(0, 0%, 90%);
+      box-shadow: 0 8px 24px hsla(0, 0%, 0%, 0.08);
+      a.navbar-item { color: hsl(0, 0%, 15%) !important; }
+    }
+    .navbar-burger { color: hsl(0, 0%, 15%); }
+  }
+
+  .button {
+    font-family: inherit;
+    font-weight: 500;
+    letter-spacing: 0;
+    border-radius: 8px;
+  }
+
+  .breadcrumb li a,
+  .breadcrumb li.is-active a { font-weight: 500; }
+
+  .section { padding-top: 1.75rem; }
+
   .car {
     border-radius: 14px;
     overflow: hidden;
+    border: 1px solid hsl(0, 0%, 90%);
+    background: #ffffff;
+    box-shadow: 0 1px 3px hsla(0, 0%, 0%, 0.04);
 
     .card-image .map {
       border-radius: 14px 14px 0 0;
@@ -989,6 +1038,37 @@ main.section {
 
 // Tesla — dark mode: near-black bg, bright cards floating.
 [data-theme="dark"][data-card-style="tesla"] {
+  body {
+    background: #000000;
+    color: hsla(0, 0%, 100%, 0.88);
+  }
+
+  .navbar.is-dark,
+  .navbar {
+    background: #0a0a0a !important;
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.08) !important;
+
+    .navbar-brand a.navbar-item,
+    a.navbar-item,
+    a.navbar-link {
+      color: hsla(0, 0%, 100%, 0.92) !important;
+    }
+    .navbar-item:hover,
+    .navbar-link:hover {
+      background: hsla(0, 0%, 100%, 0.06) !important;
+    }
+    .navbar-dropdown {
+      background: #141414 !important;
+      border-color: hsla(0, 0%, 100%, 0.1);
+      box-shadow: 0 8px 24px hsla(0, 0%, 0%, 0.5);
+      a.navbar-item { color: hsla(0, 0%, 100%, 0.85) !important; }
+      a.navbar-item:hover { background: hsla(0, 0%, 100%, 0.06) !important; }
+    }
+    .navbar-burger { color: hsla(0, 0%, 100%, 0.9); }
+  }
+
+  .button { border-radius: 8px; }
+
   .car {
     background: #0a0a0a;
     border: 1px solid hsla(0, 0%, 100%, 0.06);
