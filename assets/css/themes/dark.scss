@@ -41,6 +41,19 @@
     --bulma-breadcrumb-item-hover-color: rgba(204, 204, 220, 0.65);
   }
 
+  .geofences-layout {
+    .geofences-map {
+      border-color: rgba(204, 204, 220, 0.15);
+      background: rgba(204, 204, 220, 0.04);
+    }
+    .geofences-table .geofences-row:hover {
+      background: rgba(204, 204, 220, 0.05);
+    }
+    .geofences-table .geofences-row.is-selected-geofence {
+      background: hsla(141, 53%, 45%, 0.16);
+    }
+  }
+
   .car {
     .battery-hero {
       .battery-bar {

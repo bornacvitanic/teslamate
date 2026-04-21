@@ -154,6 +154,9 @@ function createMap(opts) {
     maxZoom: 20,
     subdomains: "abcd",
     attribution: "\u00a9 OpenStreetMap, \u00a9 CARTO",
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    keepBuffer: 4,
   });
 
   if (opts.enableHybridLayer) {
@@ -216,13 +219,19 @@ export const SimpleMap = {
       /* no geofences */
     }
 
-    // Keep Leaflet in sync with container size. The card's flex layout
-    // grows the map vertically after mount, and Leaflet reads dimensions
-    // only once by default — so the bottom fifth was being culled.
-    const ro = new ResizeObserver(() => map.invalidateSize());
+    // Keep Leaflet in sync with container size. LiveView mounts the
+    // panels on the right slightly after initial render, which expands
+    // the card height — and Leaflet reads dimensions only once, so the
+    // bottom ~fifth was being left uncovered with white. We observe
+    // both the figure and the inner .map div, and also fire several
+    // nudges spaced out in time to cover async content arrivals.
+    const mapEl = document.getElementById(`map_${this.el.dataset.id}`);
+    const nudge = () => map.invalidateSize();
+    const ro = new ResizeObserver(nudge);
     ro.observe(this.el);
-    // Also nudge once after next frame to catch the initial settle.
-    requestAnimationFrame(() => map.invalidateSize());
+    if (mapEl) ro.observe(mapEl);
+    requestAnimationFrame(nudge);
+    [100, 300, 700, 1500].forEach((ms) => setTimeout(nudge, ms));
 
     // Auto-pan follows the car while driving, but pause for 30s after the
     // user drags or zooms so they can explore without being yanked back.
@@ -249,6 +258,85 @@ export const SimpleMap = {
 export const TriggerChange = {
   updated() {
     this.el.dispatchEvent(new CustomEvent("change"));
+  },
+};
+
+// Interactive map for the geofences index page — renders all geofences as
+// circles, fly-to's the selected one when the LiveView updates
+// data-selected-id.
+export const GeofencesMap = {
+  mounted() {
+    const map = createMap({
+      elId: null,
+      zoomControl: true,
+      boxZoom: false,
+      doubleClickZoom: true,
+      keyboard: false,
+      scrollWheelZoom: true,
+      dragging: true,
+      touchZoom: true,
+    });
+    this._map = map;
+    this._circles = {};
+
+    const geofences = JSON.parse(this.el.dataset.geofences || "[]");
+    geofences.forEach((gf) => {
+      const c = new Circle([gf.lat, gf.lng], {
+        radius: gf.radius,
+        color: "#8a94a6",
+        weight: 1,
+        fillColor: "#8a94a6",
+        fillOpacity: 0.08,
+      })
+        .bindTooltip(gf.name, { sticky: true, direction: "top" })
+        .addTo(map);
+      this._circles[gf.id] = c;
+    });
+
+    if (geofences.length > 0) {
+      const lats = geofences.map((g) => g.lat);
+      const lngs = geofences.map((g) => g.lng);
+      map.fitBounds(
+        [
+          [Math.min(...lats), Math.min(...lngs)],
+          [Math.max(...lats), Math.max(...lngs)],
+        ],
+        { padding: [30, 30], animate: false },
+      );
+    } else {
+      map.setView([0, 0], 2);
+    }
+
+    this._applySelection(parseInt(this.el.dataset.selectedId || "0", 10));
+
+    const nudge = () => map.invalidateSize();
+    const ro = new ResizeObserver(nudge);
+    ro.observe(this.el);
+    requestAnimationFrame(nudge);
+    [100, 400, 1000].forEach((ms) => setTimeout(nudge, ms));
+  },
+
+  updated() {
+    this._applySelection(parseInt(this.el.dataset.selectedId || "0", 10));
+  },
+
+  _applySelection(selectedId) {
+    Object.entries(this._circles).forEach(([id, circle]) => {
+      const isSel = parseInt(id, 10) === selectedId;
+      circle.setStyle({
+        color: isSel ? "#00b894" : "#8a94a6",
+        weight: isSel ? 3 : 1,
+        fillColor: isSel ? "#00b894" : "#8a94a6",
+        fillOpacity: isSel ? 0.25 : 0.08,
+      });
+      if (isSel) circle.bringToFront();
+    });
+    if (selectedId) {
+      const sel = this._circles[selectedId];
+      if (sel) {
+        this._map.flyToBounds(sel.getBounds().pad(0.6), { duration: 0.5 });
+      }
+    }
   },
 };
 

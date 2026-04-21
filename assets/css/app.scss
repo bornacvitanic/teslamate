@@ -668,6 +668,58 @@ nav.navbar {
   background-color: transparent !important;
 }
 
+// Geofences page: table + map side by side on tablet+
+.geofences-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @include mx.tablet {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .geofences-table-wrap {
+    flex: 1 1 60%;
+    min-width: 0;
+  }
+
+  .geofences-map-wrap {
+    flex: 1 1 40%;
+    min-width: 0;
+
+    @include mx.tablet {
+      position: sticky;
+      top: 1rem;
+    }
+  }
+
+  .geofences-map {
+    height: 520px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid hsl(0, 0%, 88%);
+    background: hsl(0, 0%, 96%);
+  }
+
+  .geofences-table {
+    .geofences-row {
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .geofences-row:hover {
+      background: hsla(0, 0%, 0%, 0.03);
+    }
+    .geofences-row.is-selected-geofence {
+      background: hsla(141, 53%, 53%, 0.12);
+    }
+    .icon.is-small {
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+  }
+}
+
 .field.is-horizontal {
   &.center-vertically .field {
     display: flex;
