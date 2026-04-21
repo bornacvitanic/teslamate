@@ -43,15 +43,17 @@
               <%= geofence.name %>
             </td>
             <td class="is-hidden-mobile has-text-weight-light"><%= format_cost(geofence) %></td>
+            <% drives = Map.get(@drive_counts, geofence.id, 0) %>
+            <% charges = Map.get(@charge_counts, geofence.id, 0) %>
             <td class="is-hidden-mobile has-text-weight-light">
-              <%= if geofence.drive_count + geofence.charge_count == 0 do %>
+              <%= if drives + charges == 0 do %>
                 <span class="has-text-grey-light">—</span>
               <% else %>
-                <span title={"#{geofence.drive_count} drives · #{geofence.charge_count} charges"}>
+                <span title={"#{drives} drives · #{charges} charges"}>
                   <span class="icon is-small"><i class="mdi mdi-car"></i></span>
-                  <%= geofence.drive_count %>
+                  <%= drives %>
                   <span class="icon is-small ml-2"><i class="mdi mdi-ev-station"></i></span>
-                  <%= geofence.charge_count %>
+                  <%= charges %>
                 </span>
               <% end %>
             </td>

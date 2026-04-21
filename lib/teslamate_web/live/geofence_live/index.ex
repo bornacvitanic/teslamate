@@ -20,10 +20,14 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
         %GlobalSettings{unit_of_length: :mi} -> :ft
       end
 
-    geofences = list_geofences_with_visits()
+    geofences = Locations.list_geofences()
+    drive_counts = drive_count_map()
+    charge_counts = charge_count_map()
 
     assigns = %{
       geofences: geofences,
+      drive_counts: drive_counts,
+      charge_counts: charge_counts,
       unit_of_length: unit_of_length,
       page_title: gettext("Geo-Fences"),
       selected_id: nil,
@@ -58,19 +62,6 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
     id = String.to_integer(id)
     new_sel = if socket.assigns.selected_id == id, do: nil, else: id
     {:noreply, assign(socket, selected_id: new_sel)}
-  end
-
-  defp list_geofences_with_visits do
-    drive_counts = drive_count_map()
-    charge_counts = charge_count_map()
-
-    Repo.all(from g in GeoFence, order_by: [asc: g.name])
-    |> Enum.map(fn g ->
-      Map.merge(Map.from_struct(g), %{
-        drive_count: Map.get(drive_counts, g.id, 0),
-        charge_count: Map.get(charge_counts, g.id, 0)
-      })
-    end)
   end
 
   defp drive_count_map do
