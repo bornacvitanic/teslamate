@@ -668,11 +668,7 @@ nav.navbar {
   background-color: transparent !important;
 }
 
-// Geofences page
-//
-// On wide screens the map floats as a fixed side panel to the left of
-// the Bulma container, so the table keeps its original full width.
-// On narrow screens the map stacks normally above everything.
+// Geofences page: map sits above the table at every viewport width.
 .geofences-map-aside {
   margin-bottom: 1.25rem;
 
@@ -682,22 +678,6 @@ nav.navbar {
     overflow: hidden;
     border: 1px solid hsl(0, 0%, 88%);
     background: hsl(0, 0%, 96%);
-  }
-}
-
-@media (min-width: 1280px) {
-  .geofences-map-aside {
-    position: fixed;
-    left: 1.25rem;
-    top: 5.25rem;
-    width: 320px;
-    margin-bottom: 0;
-    z-index: 5;
-
-    .geofences-map {
-      height: calc(100vh - 7.5rem);
-      max-height: 720px;
-    }
   }
 }
 
