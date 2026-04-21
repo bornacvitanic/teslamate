@@ -900,3 +900,250 @@ main.section {
     background-color: initial;
   }
 }
+
+// =============================================================================
+// Card-style variants (selectable from the navbar Style dropdown).
+// Applied via data-card-style on <html>. Each style overrides the default
+// summary card look. Tesla is fully realized; the others are deliberately
+// minimal distinguishing stubs — meant to validate the plumbing and give a
+// starting direction; they'll be fleshed out in follow-up commits.
+// =============================================================================
+
+// --- TESLA app: rounded, high-contrast, red-accented driving panel ---
+[data-card-style="tesla"] {
+  .car {
+    border-radius: 14px;
+    overflow: hidden;
+
+    .card-image .map {
+      border-radius: 14px 14px 0 0;
+    }
+    @include mx.tablet {
+      .card-image .map {
+        border-radius: 14px 0 0 14px;
+      }
+    }
+
+    .card-content {
+      padding: 1rem 1.25rem;
+    }
+
+    .state-pill {
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .battery-hero {
+      .battery-bar {
+        border-radius: 10px;
+        border-width: 1px;
+        border-color: hsla(0, 0%, 0%, 0.25);
+        background: hsla(0, 0%, 0%, 0.04);
+      }
+      .battery-readout .battery-pct {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .battery-readout .battery-range { font-weight: 500; }
+    }
+
+    .stat-card {
+      border-radius: 12px;
+      border: 1px solid hsla(0, 0%, 0%, 0.08);
+      background: hsla(0, 0%, 0%, 0.02);
+      .stat-value { font-weight: 800; letter-spacing: -0.01em; }
+    }
+
+    .tire-panel .tire {
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    // Iconic Tesla-red driving speed panel.
+    .driving-panel {
+      border-radius: 12px;
+      background: #e82127;
+      border: none;
+      .drv-speed { color: #fff; letter-spacing: -0.02em; }
+      .drv-unit { color: hsla(0, 0%, 100%, 0.8); }
+      .icon { color: #fff; }
+    }
+
+    .charging-panel {
+      border-radius: 12px;
+      background: hsla(210, 80%, 55%, 0.08);
+      border-color: hsla(210, 80%, 55%, 0.28);
+      .charging-header { color: hsl(210, 80%, 35%); }
+    }
+
+    .weather-strip .weather-day {
+      border-radius: 10px;
+      background: hsla(0, 0%, 0%, 0.03);
+    }
+
+    .version-footer { letter-spacing: 0.03em; }
+  }
+}
+
+// Tesla — dark mode: near-black bg, bright cards floating.
+[data-theme="dark"][data-card-style="tesla"] {
+  .car {
+    background: #0a0a0a;
+    border: 1px solid hsla(0, 0%, 100%, 0.06);
+
+    .battery-hero .battery-bar {
+      border-color: hsla(0, 0%, 100%, 0.25);
+      background: hsla(0, 0%, 100%, 0.06);
+    }
+    .stat-card {
+      background: hsla(0, 0%, 100%, 0.04);
+      border-color: hsla(0, 0%, 100%, 0.08);
+    }
+    .tire-panel .tire { background: hsla(0, 0%, 100%, 0.04); }
+    .weather-strip .weather-day { background: hsla(0, 0%, 100%, 0.04); }
+    .charging-panel {
+      background: hsla(210, 80%, 55%, 0.14);
+      border-color: hsla(210, 80%, 55%, 0.35);
+      .charging-header { color: hsl(210, 80%, 75%); }
+    }
+  }
+}
+
+// --- LINEAR: very sharp corners, monochrome, indigo-accented ---
+[data-card-style="linear"] {
+  .car {
+    border-radius: 6px;
+    .stat-card,
+    .tire-panel .tire,
+    .weather-strip .weather-day,
+    .driving-panel,
+    .charging-panel { border-radius: 4px; }
+    .state-pill { border-radius: 4px; }
+    .battery-hero .battery-bar { border-radius: 3px; border-width: 1px; }
+    .stat-card.is-good .stat-value,
+    .stat-card.is-savings .stat-value { color: hsl(249, 55%, 55%); }
+    .state-pill.state-online { background: hsla(249, 55%, 55%, 0.15); color: hsl(249, 55%, 45%); }
+  }
+}
+
+// --- VERCEL: flat black + white, medium radii, hairline borders ---
+[data-card-style="vercel"] {
+  .car {
+    border: 1px solid hsl(0, 0%, 87%);
+    border-radius: 10px;
+    .stat-card,
+    .tire-panel .tire,
+    .weather-strip .weather-day { border-radius: 8px; }
+    .battery-hero .battery-bar { border-color: #000; border-width: 1px; }
+    .stat-card { background: #fff; border-color: hsl(0, 0%, 90%); }
+    .state-pill { border-radius: 4px; background: hsl(0, 0%, 96%); color: #000; }
+  }
+}
+[data-theme="dark"][data-card-style="vercel"] .car {
+  background: #000;
+  border-color: hsl(0, 0%, 15%);
+  .stat-card { background: hsl(0, 0%, 4%); border-color: hsl(0, 0%, 15%); }
+  .battery-hero .battery-bar { border-color: #fff; }
+}
+
+// --- RAYCAST: warm dark, generous radii, gradient-ish tiles ---
+[data-card-style="raycast"] {
+  .car {
+    border-radius: 16px;
+    .stat-card {
+      border-radius: 12px;
+      background: linear-gradient(180deg, hsla(0, 0%, 0%, 0.02), hsla(0, 0%, 0%, 0.05));
+    }
+    .tire-panel .tire,
+    .weather-strip .weather-day,
+    .driving-panel,
+    .charging-panel { border-radius: 12px; }
+    .state-pill { border-radius: 999px; }
+    .battery-hero .battery-bar { border-radius: 12px; }
+  }
+}
+[data-theme="dark"][data-card-style="raycast"] .car {
+  background: hsl(24, 10%, 9%);
+  .stat-card {
+    background: linear-gradient(180deg, hsla(30, 20%, 100%, 0.04), hsla(30, 20%, 100%, 0.01));
+    border-color: hsla(30, 20%, 100%, 0.06);
+  }
+}
+
+// --- SUPABASE: green-accented, card-heavy, calm neutrals ---
+[data-card-style="supabase"] {
+  .car {
+    border-radius: 10px;
+    .stat-card {
+      border-radius: 8px;
+      border-color: hsl(141, 30%, 85%);
+    }
+    .state-pill.state-online {
+      background: hsla(141, 60%, 45%, 0.15);
+      color: hsl(141, 60%, 30%);
+    }
+    .battery-bar.is-good .battery-fill { background: hsl(153, 60%, 45%); }
+    .stat-card.is-savings,
+    .stat-card.is-good {
+      border-color: hsla(153, 60%, 45%, 0.5);
+    }
+  }
+}
+
+// --- PLAUSIBLE: ultra-minimal, big numbers, almost no borders ---
+[data-card-style="plausible"] {
+  .car {
+    border-radius: 8px;
+    .stat-card {
+      background: transparent;
+      border: none;
+      border-top: 1px solid hsl(0, 0%, 92%);
+      border-radius: 0;
+      padding: 0.6rem 0.25rem;
+    }
+    .stat-card .stat-value { font-size: 1.55rem; font-weight: 700; }
+    .state-pill { background: transparent; padding-left: 0; }
+    .battery-hero .battery-bar { border: none; background: hsl(0, 0%, 94%); border-radius: 999px; }
+    .battery-hero .battery-bar .battery-fill { border-radius: 999px; }
+  }
+}
+[data-theme="dark"][data-card-style="plausible"] .car {
+  .stat-card { border-top-color: hsla(204, 35%, 90%, 0.08); }
+  .battery-hero .battery-bar { background: hsla(204, 35%, 90%, 0.08); }
+}
+
+// --- APPLE HEALTH: colorful, large radii, soft gradient tiles ---
+[data-card-style="apple-health"] {
+  .car {
+    border-radius: 20px;
+    .stat-card {
+      border-radius: 16px;
+      background: linear-gradient(135deg, hsla(210, 100%, 95%, 0.9), hsla(330, 100%, 97%, 0.9));
+      border: none;
+    }
+    .stat-card.is-good,
+    .stat-card.is-savings {
+      background: linear-gradient(135deg, hsla(141, 80%, 92%, 0.9), hsla(180, 80%, 94%, 0.9));
+    }
+    .stat-card.is-warn {
+      background: linear-gradient(135deg, hsla(36, 90%, 92%, 0.9), hsla(20, 90%, 93%, 0.9));
+    }
+    .stat-card.is-low {
+      background: linear-gradient(135deg, hsla(348, 80%, 94%, 0.9), hsla(330, 80%, 95%, 0.9));
+    }
+    .tire-panel .tire,
+    .weather-strip .weather-day,
+    .driving-panel,
+    .charging-panel { border-radius: 14px; }
+    .state-pill { border-radius: 999px; font-weight: 700; }
+    .battery-hero .battery-bar { border-radius: 14px; border: none; background: hsl(0, 0%, 92%); }
+  }
+}
+[data-theme="dark"][data-card-style="apple-health"] .car {
+  .stat-card {
+    background: linear-gradient(135deg, hsla(210, 50%, 20%, 0.6), hsla(330, 50%, 18%, 0.6));
+    color: hsla(0, 0%, 100%, 0.9);
+  }
+}

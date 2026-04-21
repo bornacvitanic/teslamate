@@ -20,6 +20,19 @@ const liveSocket = new LiveSocket(window.LIVE_PATH, Socket, {
   },
 });
 
+// Card-style previewer: read ?style=... from the URL and apply
+// data-card-style to <html>, so CSS rules like
+// [data-card-style="tesla"] .car {...} can override the default look.
+// Re-applied on navigation so LiveView links keep the chosen variant.
+function applyCardStyleFromUrl() {
+  const q = new URLSearchParams(window.location.search);
+  const style = q.get("style") || "default";
+  document.documentElement.setAttribute("data-card-style", style);
+}
+applyCardStyleFromUrl();
+window.addEventListener("popstate", applyCardStyleFromUrl);
+window.addEventListener("phx:page-loading-stop", applyCardStyleFromUrl);
+
 liveSocket.connect();
 
 // liveSocket.enableDebug();
