@@ -93,6 +93,7 @@ import {
   Icon,
   Circle,
   CircleMarker,
+  DomEvent,
 } from "leaflet";
 
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -335,6 +336,12 @@ export const GeofencesMap = {
       })
         .bindTooltip(gf.name, { sticky: true, direction: "top" })
         .addTo(map);
+      c.on("click", (e) => {
+        // Stop Leaflet from bubbling the click up to the map, which
+        // would otherwise trigger 'map_click' (create-at-this-point).
+        DomEvent.stopPropagation(e);
+        this.pushEvent("select", { id: gf.id });
+      });
       this._circles[gf.id] = c;
     });
 
