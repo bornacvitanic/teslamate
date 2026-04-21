@@ -208,14 +208,21 @@ export const SimpleMap = {
           weight: isHome ? 2 : 1,
           fillColor: isHome ? "#00b894" : "#8a94a6",
           fillOpacity: isHome ? 0.15 : 0.05,
-          interactive: false,
         })
-          .bindTooltip(gf.name, { permanent: false, direction: "top" })
+          .bindTooltip(gf.name, { direction: "top", sticky: true })
           .addTo(map);
       });
     } catch (_) {
       /* no geofences */
     }
+
+    // Keep Leaflet in sync with container size. The card's flex layout
+    // grows the map vertically after mount, and Leaflet reads dimensions
+    // only once by default — so the bottom fifth was being culled.
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(this.el);
+    // Also nudge once after next frame to catch the initial settle.
+    requestAnimationFrame(() => map.invalidateSize());
 
     // Auto-pan follows the car while driving, but pause for 30s after the
     // user drags or zooms so they can explore without being yanked back.
