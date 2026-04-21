@@ -427,33 +427,26 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   defp fetch_battery_health(car_id) do
-    base_where = fn q ->
-      from c in q,
-        where:
-          c.car_id == ^car_id and not is_nil(c.end_rated_range_km) and
-            not is_nil(c.end_battery_level) and c.end_battery_level >= 20
-    end
-
     first10 =
       Repo.all(
-        base_where.(ChargingProcess)
-        |> order_by(asc: :start_date)
-        |> limit(10)
-        |> select(
-          [c],
-          type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
-        )
+        from c in ChargingProcess,
+          where:
+            c.car_id == ^car_id and not is_nil(c.end_rated_range_km) and
+              not is_nil(c.end_battery_level) and c.end_battery_level >= 20,
+          order_by: [asc: c.start_date],
+          limit: 10,
+          select: type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
       )
 
     last10 =
       Repo.all(
-        base_where.(ChargingProcess)
-        |> order_by(desc: :start_date)
-        |> limit(10)
-        |> select(
-          [c],
-          type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
-        )
+        from c in ChargingProcess,
+          where:
+            c.car_id == ^car_id and not is_nil(c.end_rated_range_km) and
+              not is_nil(c.end_battery_level) and c.end_battery_level >= 20,
+          order_by: [desc: c.start_date],
+          limit: 10,
+          select: type(c.end_rated_range_km, :float) / c.end_battery_level * 100.0
       )
 
     if length(first10) >= 3 and length(last10) >= 3 do
