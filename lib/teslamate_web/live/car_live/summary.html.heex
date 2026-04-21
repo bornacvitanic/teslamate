@@ -265,7 +265,7 @@
               <%= tag(:span,
                 data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
                 phx_hook: "LocalTime",
-                id: "scheduled_start_time_#{@car.id}".replace(/[#]/, '#')}"
+                id: "scheduled_start_time_#{@car.id}"
               ) %>
             </span>
           </div>
