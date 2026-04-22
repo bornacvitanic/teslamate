@@ -182,7 +182,7 @@
         <span class="charging-rhs">
           <%= if not is_nil(@summary.charger_power) do %><span class="ch-pill"><%= @summary.charger_power %> kW</span><% end %>
           <%= if not is_nil(@summary.charge_energy_added) do %><span class="ch-pill">+<%= @summary.charge_energy_added %> kWh</span><% end %>
-          <%= if cp && not is_nil(cp.current) and not is_nil(cp.pilot) do %><span class="ch-pill"><%= cp.current %>/<%= cp.pilot %> A</span><% end %>
+          <%= if cp && not is_nil(cp.current) && not is_nil(cp.pilot) do %><span class="ch-pill"><%= cp.current %>/<%= cp.pilot %> A</span><% end %>
           <%= if cp && not is_nil(cp.voltage) do %><span class="ch-pill"><%= cp.voltage %> V</span><% end %>
         </span>
       </div>
