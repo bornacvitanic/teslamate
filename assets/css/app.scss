@@ -191,7 +191,7 @@ nav.navbar {
     color: hsla(0, 0%, 100%, 0.95);
   }
   .car-top > .car-head {
-    padding: 0.6rem 0.8rem 0.4rem;
+    padding: 0.6rem 1.25rem 0.4rem;
     margin-bottom: 0 !important;
 
     // Override dark text inside the overlay for readability on map tiles.
@@ -702,60 +702,35 @@ nav.navbar {
     }
   }
 
-  // Charging panel — neutral light gray, subtle radius, compact rows.
+  // Charging panel — plain inline text, no boxes, no borders, lines up
+  // with the menu rows. Sits as part of the list rhythm.
   .charging-panel {
-    margin: 0 0.25rem 0.75rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 6px;
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0;
+    background: transparent;
     border: none;
-    background: hsl(0, 0%, 94%);
+    border-radius: 0;
     font-variant-numeric: tabular-nums;
-    font-size: 0.85rem;
-    color: hsl(0, 0%, 25%);
+    font-size: 0.9rem;
+    color: hsl(0, 0%, 30%);
 
-    .charging-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      line-height: 1.4;
-    }
-    .charging-row + .charging-row {
-      margin-top: 0.35rem;
-      padding-top: 0.35rem;
-      border-top: 1px solid hsl(0, 0%, 88%);
-    }
-
-    .charging-lhs {
-      white-space: nowrap;
+    .charging-head {
       font-weight: 500;
       color: hsl(0, 0%, 30%);
-      strong { font-weight: 700; color: hsl(0, 0%, 15%); }
+      strong { font-weight: 700; color: hsl(0, 0%, 10%); }
     }
-    .charging-rhs {
+    .charging-line {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.3rem;
-      justify-content: flex-end;
-    }
-
-    .ch-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.08rem 0.4rem;
-      background: hsl(0, 0%, 100%);
-      border: 1px solid hsl(0, 0%, 88%);
-      border-radius: 4px;
-      font-size: 0.8rem;
+      gap: 0.35rem 0.9rem;
+      margin-top: 0.25rem;
       font-weight: 600;
-      color: hsl(0, 0%, 25%);
-      white-space: nowrap;
+      color: hsl(0, 0%, 20%);
     }
-
-    .charging-row-eta,
-    .charging-row-scheduled {
+    .charging-meta {
+      margin-top: 0.3rem;
       font-size: 0.78rem;
-      color: hsl(0, 0%, 50%);
+      color: hsl(0, 0%, 52%);
       font-weight: 500;
     }
   }
@@ -869,7 +844,7 @@ nav.navbar {
 
   // Footer: model, odometer, firmware at the bottom of the summary card.
   .car-footer {
-    margin: 1.25rem 1rem 0.75rem;
+    margin: 1.25rem 0 0.75rem;
     padding-top: 0.75rem;
     border-top: 1px solid hsl(0, 0%, 90%);
 

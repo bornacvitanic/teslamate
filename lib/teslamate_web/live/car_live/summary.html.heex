@@ -171,20 +171,18 @@
 
     <div class={"charging-panel #{unless @summary.state == :charging, do: "is-conditional-hidden"}"}>
       <% cp = (is_map(@widget) && @widget[:charging_power]) || nil %>
-      <div class="charging-row charging-row-main">
-        <span class="charging-lhs">
-          <%= if not is_nil(@summary.charge_limit_soc) do %>
-            Charge limit <strong><%= @summary.charge_limit_soc %>%</strong>
-          <% else %>
-            Charging
-          <% end %>
-        </span>
-        <span class="charging-rhs">
-          <%= if not is_nil(@summary.charger_power) do %><span class="ch-pill"><%= @summary.charger_power %> kW</span><% end %>
-          <%= if not is_nil(@summary.charge_energy_added) do %><span class="ch-pill">+<%= @summary.charge_energy_added %> kWh</span><% end %>
-          <%= if cp && not is_nil(cp.current) && not is_nil(cp.pilot) do %><span class="ch-pill"><%= cp.current %>/<%= cp.pilot %> A</span><% end %>
-          <%= if cp && not is_nil(cp.voltage) do %><span class="ch-pill"><%= cp.voltage %> V</span><% end %>
-        </span>
+      <div class="charging-head">
+        <%= if not is_nil(@summary.charge_limit_soc) do %>
+          Charge limit <strong><%= @summary.charge_limit_soc %>%</strong>
+        <% else %>
+          Charging
+        <% end %>
+      </div>
+      <div class="charging-line">
+        <%= if not is_nil(@summary.charger_power) do %><span><%= @summary.charger_power %> kW</span><% end %>
+        <%= if not is_nil(@summary.charge_energy_added) do %><span>+<%= @summary.charge_energy_added %> kWh</span><% end %>
+        <%= if cp && not is_nil(cp.current) && not is_nil(cp.pilot) do %><span><%= cp.current %>/<%= cp.pilot %> A</span><% end %>
+        <%= if cp && not is_nil(cp.voltage) do %><span><%= cp.voltage %> V</span><% end %>
       </div>
 
       <%= if not is_nil(@summary.time_to_full_charge) do %>
@@ -194,10 +192,7 @@
           |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
           |> DateTime.shift_zone!(@tz) %>
         <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
-        <div class="charging-row charging-row-eta">
-          <span class="charging-lhs">Remaining <%= remaining_str %></span>
-          <span class="charging-rhs">ETA <%= eta_str %></span>
-        </div>
+        <div class="charging-meta">Remaining <%= remaining_str %> · ETA <%= eta_str %></div>
       <% end %>
 
         <%= if @summary.plugged_in and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
