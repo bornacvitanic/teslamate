@@ -156,15 +156,15 @@ nav.navbar {
   }
 
   // Map now lives inside .card-content (moved from .card-image).
-  // Single-column layout on every breakpoint.
+  // Edge to edge: negative margins cancel .card-content's horizontal padding.
   .card-map {
-    margin: 0.25rem 1rem 0.75rem;
+    margin: 0.25rem -0.4rem 0.75rem;
 
     .map {
       height: 260px;
-      border-radius: 10px;
       overflow: hidden;
       position: relative;
+      border-radius: 0;
     }
   }
 
@@ -172,6 +172,10 @@ nav.navbar {
     .card-content {
       width: 100%;
       padding: 1rem 1.5rem;
+    }
+    .card-map {
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
     }
     .card-map .map { height: 320px; }
   }
@@ -468,12 +472,11 @@ nav.navbar {
   }
 
   // Quick-info icons — Tesla-app style: big, spread across full width,
-  // light gray, no underline. Spinner stays in its slot when idle so
-  // the row doesn't reshuffle when syncing finishes.
+  // light gray, no underline. Each slot gets an equal share of the row.
   .icons-row {
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
     gap: 0.5rem;
     padding: 1rem 0.75rem;
     color: hsl(0, 0%, 58%);
@@ -487,17 +490,20 @@ nav.navbar {
     [data-tooltip],
     span[data-tooltip] { border-bottom: none !important; }
 
-    > .icon,
-    > span,
-    > a {
-      font-size: 1.75rem;
-      color: inherit;
-      line-height: 1;
-      flex: 0 1 auto;
+    // Every direct child becomes an equal-flex slot, centered horizontally,
+    // so a link with wrapped content doesn't push its neighbors off-screen.
+    > * {
+      flex: 1 1 0;
+      min-width: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      color: inherit !important;
+      font-size: 1.75rem;
+      line-height: 1;
+      text-decoration: none;
     }
+
     // Kill color overrides from Bulma (has-text-grey-dark, has-text-link, etc.)
     .has-text-grey-dark,
     .has-text-link,
