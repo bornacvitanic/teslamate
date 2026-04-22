@@ -448,37 +448,67 @@ nav.navbar {
     }
   }
 
-  // Tesla-app style: small battery pill + percentage + optional bolt,
-  // rendered inline below the car name (green by default, amber <50%, red <20%).
+  // Tesla-app style: small battery pill + percentage + optional bolt.
+  // Color depends on the car state:
+  //   charging -> green
+  //   online   -> un-muted gray (readable)
+  //   offline/asleep -> muted gray
   .mini-battery {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    margin-top: 0.25rem;
+    margin-top: 0.1rem;
     font-weight: 600;
-    color: hsl(141, 53%, 40%);
 
     .mini-battery-icon { width: 26px; height: 14px; display: block; }
     .mini-battery-pct { font-size: 1rem; font-variant-numeric: tabular-nums; }
     .mini-battery-bolt { color: inherit; }
-    &.is-warn  { color: hsl(36, 90%, 40%); }
-    &.is-low   { color: hsl(348, 80%, 48%); }
+
+    &.is-charging { color: hsl(141, 60%, 38%); }
+    &.is-online   { color: hsl(0, 0%, 35%); }
+    &.is-offline  { color: hsl(0, 0%, 70%); }
   }
 
-  // Status line: "Parked", "Charging for 15m", "Asleep for 2 days" — plain muted text.
+  // Status line: spinner slot + state text. Spinner always reserves its
+  // slot; hidden when idle, visible gray + spinning when syncing.
   .status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     margin-top: 0.15rem;
     font-size: 0.9rem;
     color: hsl(0, 0%, 45%);
     font-weight: 500;
-    text-transform: capitalize;
+
+    .status-text { text-transform: capitalize; }
+
+    .status-spinner {
+      display: inline-block;
+      width: 0.95rem;
+      height: 0.95rem;
+      border: 2px solid transparent;
+      border-radius: 999px;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+    }
+    .status-spinner.is-idle { visibility: hidden; }
+    .status-spinner.is-syncing {
+      visibility: visible;
+      border-color: hsl(0, 0%, 65%);
+      border-right-color: transparent;
+      animation: spinAround 0.7s linear infinite;
+    }
   }
 
-  // Tesla-app icons row: exactly 4 equal slots (sync / location / plug / lock).
-  // Other warnings live in .warn-strip below this row.
+  // Collapse the excessive bottom margin on the media block above the map.
+  .car-head { margin-bottom: 0.25rem !important; }
+  .card-content .title.is-5 { margin-bottom: 0.1rem; }
+
+  // Tesla-app icons row: 3 equal slots (lock / charging bolt / location).
+  // The sync spinner lives next to the status line above the map.
   .icons-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     align-items: center;
     justify-items: center;
     padding: 1rem 0.75rem;
@@ -735,12 +765,16 @@ nav.navbar {
       margin-top: 0.45rem;
       font-size: 0.78rem;
       color: hsl(0, 0%, 55%);
+      .fw-version { font-variant-numeric: tabular-nums; color: hsl(0, 0%, 30%); }
+    }
+    .car-footer-release {
+      margin-top: 0.15rem;
+      font-size: 0.78rem;
       a {
-        color: hsl(0, 0%, 40%);
+        color: hsl(210, 80%, 45%);
         text-decoration: underline;
-        text-decoration-style: dotted;
       }
-      a:hover { color: hsl(210, 80%, 45%); }
+      a:hover { color: hsl(210, 80%, 35%); }
     }
   }
 

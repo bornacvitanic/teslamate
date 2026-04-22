@@ -1,16 +1,17 @@
 <div class="car card">
 
   <div class="card-content">
-    <div class="media is-flex mb-5">
+    <div class="media is-flex car-head">
       <div class="media-content">
         <p class="title is-5"><%= @summary.display_name %></p>
         <%= if not is_nil(@summary.battery_level) do %>
           <% mb_lvl = @summary.usable_battery_level || @summary.battery_level %>
           <% mb_cls =
             cond do
-              mb_lvl >= 50 -> "is-good"
-              mb_lvl >= 20 -> "is-warn"
-              true -> "is-low"
+              @summary.state == :charging -> "is-charging"
+              @summary.state in [:offline, :asleep, :unavailable, :unknown] -> "is-offline"
+              is_nil(@summary.state) -> "is-offline"
+              true -> "is-online"
             end %>
           <div class={"mini-battery #{mb_cls}"}>
             <svg class="mini-battery-icon" viewBox="0 0 26 14" aria-hidden="true">
@@ -25,7 +26,12 @@
           </div>
         <% end %>
         <div class="status-line">
-          <%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %>
+          <span
+            class={"status-spinner #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
+            data-tooltip={gettext("Fetching vehicle data ...")}
+            aria-hidden="true"
+          ></span>
+          <span class="status-text"><%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %></span>
         </div>
       </div>
     </div>
@@ -55,36 +61,7 @@
         disabled
       />
         </div>
-    <div class="icons-row">
-      <span
-        class={"icon-slot spinner has-tooltip-top has-tooltip-left-mobile #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
-        data-tooltip={gettext("Fetching vehicle data ...")}
-      >
-        <span class="is-loading"></span>
-      </span>
-
-      <%= if not is_nil(@summary.latitude) and not is_nil(@summary.longitude) do %>
-        <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
-                target: "_blank",
-                rel: "noopener noreferrer",
-                class: "icon-slot has-tooltip-top has-tooltip-left-mobile",
-                data: [tooltip: gettext("View car location on Google Maps")] do %>
-          <span class="mdi mdi-map-marker-outline"></span>
-        <% end %>
-      <% else %>
-        <span class="icon-slot is-empty"></span>
-      <% end %>
-
-      <%= if @summary.plugged_in == true do %>
-        <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Plugged In")}>
-          <span class="mdi mdi-power-plug"></span>
-        </span>
-      <% else %>
-        <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Not plugged in">
-          <span class="mdi mdi-power-plug-off-outline"></span>
-        </span>
-      <% end %>
-
+    <div class="icons-row icons-row-3">
       <%= cond do %>
         <% @summary.locked == true -> %>
           <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Locked")}>
@@ -98,6 +75,33 @@
           <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Lock state unknown (car offline)">
             <span class="mdi mdi-lock-outline"></span>
           </span>
+      <% end %>
+
+      <%= cond do %>
+        <% @summary.state == :charging -> %>
+          <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Charging")}>
+            <span class="mdi mdi-lightning-bolt"></span>
+          </span>
+        <% @summary.plugged_in == true -> %>
+          <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Plugged In")}>
+            <span class="mdi mdi-lightning-bolt"></span>
+          </span>
+        <% true -> %>
+          <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Not plugged in">
+            <span class="mdi mdi-lightning-bolt-outline"></span>
+          </span>
+      <% end %>
+
+      <%= if not is_nil(@summary.latitude) and not is_nil(@summary.longitude) do %>
+        <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
+                target: "_blank",
+                rel: "noopener noreferrer",
+                class: "icon-slot has-tooltip-top has-tooltip-left-mobile",
+                data: [tooltip: gettext("View car location on Google Maps")] do %>
+          <span class="mdi mdi-map-marker-outline"></span>
+        <% end %>
+      <% else %>
+        <span class="icon-slot is-empty"></span>
       <% end %>
     </div>
 
@@ -545,12 +549,14 @@
       <% end %>
       <%= unless is_nil(@summary.version) do %>
         <div class="car-footer-firmware">
-          Software:
-          <%= link(@summary.version,
-            to: "https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes",
-            target: "_blank",
-            rel: "noopener noreferrer"
-          ) %>
+          Software: <span class="fw-version"><%= @summary.version %></span>
+        </div>
+        <div class="car-footer-release">
+          <a
+            href={"https://www.notateslaapp.com/software-updates/version/#{@summary.version}/release-notes"}
+            target="_blank"
+            rel="noopener noreferrer"
+          >Release Notes</a>
         </div>
       <% end %>
     </div>

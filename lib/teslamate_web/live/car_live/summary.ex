@@ -41,6 +41,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
     {geofences_json, home_geofence_id} = fetch_geofences_for_map(car.id)
 
+    summary = fill_last_known_tpms(summary, car.id)
+
     assigns = %{
       car: car,
       summary: summary,
@@ -101,6 +103,44 @@ defmodule TeslaMateWeb.CarLive.Summary do
   defp decimal_to_float(n) when is_number(n), do: n * 1.0
   defp decimal_to_float(_), do: nil
 
+  # When the car is offline the live Summary has nil tpms_pressure_* fields.
+  # Fall back to the latest positions row so the tire widget keeps showing
+  # the last known pressures.
+  defp fill_last_known_tpms(%Summary{} = s, car_id) do
+    if is_nil(s.tpms_pressure_fl) or is_nil(s.tpms_pressure_fr) or
+         is_nil(s.tpms_pressure_rl) or is_nil(s.tpms_pressure_rr) do
+      case Repo.one(
+             from p in "positions",
+               where:
+                 p.car_id == ^car_id and
+                   not is_nil(p.tpms_pressure_fl) and not is_nil(p.tpms_pressure_fr) and
+                   not is_nil(p.tpms_pressure_rl) and not is_nil(p.tpms_pressure_rr),
+               order_by: [desc: p.date],
+               limit: 1,
+               select: %{
+                 fl: p.tpms_pressure_fl,
+                 fr: p.tpms_pressure_fr,
+                 rl: p.tpms_pressure_rl,
+                 rr: p.tpms_pressure_rr
+               }
+           ) do
+        %{fl: fl, fr: fr, rl: rl, rr: rr} ->
+          %{
+            s
+            | tpms_pressure_fl: s.tpms_pressure_fl || decimal_to_float(fl),
+              tpms_pressure_fr: s.tpms_pressure_fr || decimal_to_float(fr),
+              tpms_pressure_rl: s.tpms_pressure_rl || decimal_to_float(rl),
+              tpms_pressure_rr: s.tpms_pressure_rr || decimal_to_float(rr)
+          }
+
+        _ ->
+          s
+      end
+    else
+      s
+    end
+  end
+
   @impl true
   def handle_event("suspend_logging", _val, socket) do
     cancel_timer(socket.assigns.error_timeout)
@@ -146,6 +186,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   def handle_info(%Summary{since: since} = summary, socket) do
+    summary = fill_last_known_tpms(summary, socket.assigns.car.id)
+
     socket =
       assign(socket, summary: summary, duration: humanize_duration(since), loading: false)
 

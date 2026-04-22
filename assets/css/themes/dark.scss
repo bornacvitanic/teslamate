@@ -141,11 +141,15 @@
       }
     }
 
-    .mini-battery { color: hsl(141, 53%, 65%); }
-    .mini-battery.is-warn { color: hsl(36, 90%, 65%); }
-    .mini-battery.is-low { color: hsl(348, 80%, 70%); }
+    .mini-battery.is-charging { color: hsl(141, 60%, 65%); }
+    .mini-battery.is-online { color: rgba(204, 204, 220, 0.85); }
+    .mini-battery.is-offline { color: rgba(204, 204, 220, 0.4); }
 
     .status-line { color: rgba(204, 204, 220, 0.6); }
+    .status-line .status-spinner.is-syncing {
+      border-color: rgba(204, 204, 220, 0.8);
+      border-right-color: transparent;
+    }
 
     .icons-row { color: rgba(204, 204, 220, 0.55); }
     .icons-row .icon-slot.is-muted { color: rgba(204, 204, 220, 0.25) !important; }
@@ -202,9 +206,10 @@
       .car-footer-odometer { color: rgba(204, 204, 220, 0.55); }
       .car-footer-firmware {
         color: rgba(204, 204, 220, 0.55);
-        a { color: rgba(204, 204, 220, 0.75); }
-        a:hover { color: rgb(110, 159, 255); }
+        .fw-version { color: rgba(204, 204, 220, 0.85); }
       }
+      .car-footer-release a { color: rgb(110, 159, 255); }
+      .car-footer-release a:hover { color: rgb(150, 185, 255); }
     }
   }
 }
