@@ -105,6 +105,9 @@ nav.navbar {
   flex-direction: column;
   margin-bottom: 25px;
   overflow: visible;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
 
   .card-content {
     padding: 0.8rem 0.4rem;
@@ -471,48 +474,58 @@ nav.navbar {
     text-transform: capitalize;
   }
 
-  // Quick-info icons — Tesla-app style: big, spread across full width,
-  // light gray, no underline. Each slot gets an equal share of the row.
+  // Tesla-app icons row: exactly 4 equal slots (sync / location / plug / lock).
+  // Other warnings live in .warn-strip below this row.
   .icons-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    justify-items: center;
     padding: 1rem 0.75rem;
     color: hsl(0, 0%, 58%);
 
     // Neutralize bulma-tooltip's dotted underline.
-    .has-tooltip-top,
-    .has-tooltip-bottom,
-    .has-tooltip-left,
-    .has-tooltip-right,
-    .has-tooltip-left-mobile,
-    [data-tooltip],
-    span[data-tooltip] { border-bottom: none !important; }
+    [data-tooltip] { border-bottom: none !important; }
 
-    // Every direct child becomes an equal-flex slot, centered horizontally,
-    // so a link with wrapped content doesn't push its neighbors off-screen.
-    > * {
-      flex: 1 1 0;
-      min-width: 0;
+    .icon-slot {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: inherit !important;
+      width: 2.25rem;
+      height: 2.25rem;
       font-size: 1.75rem;
       line-height: 1;
+      color: inherit !important;
       text-decoration: none;
     }
+    .icon-slot.is-empty { visibility: hidden; }
+    .icon-slot.is-muted { color: hsl(0, 0%, 80%) !important; }
+    .icon-slot.spinner.is-idle { visibility: hidden; }
+    .icon-slot .mdi { font-size: 1.75rem; line-height: 1; }
+  }
 
-    // Kill color overrides from Bulma (has-text-grey-dark, has-text-link, etc.)
-    .has-text-grey-dark,
-    .has-text-link,
-    .has-text-danger { color: inherit !important; }
-    .mdi { font-size: 1.75rem; line-height: 1; }
+  // Contextual warning pills shown below the 4-slot row, only when applicable.
+  .warn-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0 1rem 0.5rem;
 
-    // Keep the sync spinner's slot even when idle (invisible but occupies space).
-    .spinner.is-idle { visibility: hidden; }
-    .spinner.is-syncing { visibility: visible; }
+    .warn-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 999px;
+      background: hsl(0, 0%, 93%);
+      color: hsl(0, 0%, 45%);
+      font-size: 0.95rem;
+      [data-tooltip] { border-bottom: none !important; }
+      .mdi { font-size: 0.95rem; }
+      &.is-info { background: hsla(210, 80%, 55%, 0.15); color: hsl(210, 80%, 40%); }
+      &.is-danger { background: hsla(348, 80%, 58%, 0.15); color: hsl(348, 70%, 45%); }
+    }
   }
 
   .driving-panel {

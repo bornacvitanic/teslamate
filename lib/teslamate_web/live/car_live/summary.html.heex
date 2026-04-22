@@ -56,169 +56,89 @@
       />
         </div>
     <div class="icons-row">
-        <span
-          class={"spinner has-tooltip-top has-tooltip-left-mobile #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
-          data-tooltip={gettext("Fetching vehicle data ...")}
-        >
-          <span class="is-loading"></span>
+      <span
+        class={"icon-slot spinner has-tooltip-top has-tooltip-left-mobile #{if @fetch_status, do: "is-syncing", else: "is-idle"}"}
+        data-tooltip={gettext("Fetching vehicle data ...")}
+      >
+        <span class="is-loading"></span>
+      </span>
+
+      <%= if not is_nil(@summary.latitude) and not is_nil(@summary.longitude) do %>
+        <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
+                target: "_blank",
+                rel: "noopener noreferrer",
+                class: "icon-slot has-tooltip-top has-tooltip-left-mobile",
+                data: [tooltip: gettext("View car location on Google Maps")] do %>
+          <span class="mdi mdi-map-marker-outline"></span>
+        <% end %>
+      <% else %>
+        <span class="icon-slot is-empty"></span>
+      <% end %>
+
+      <%= if @summary.plugged_in == true do %>
+        <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Plugged In")}>
+          <span class="mdi mdi-power-plug"></span>
         </span>
+      <% else %>
+        <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Not plugged in">
+          <span class="mdi mdi-power-plug-off-outline"></span>
+        </span>
+      <% end %>
+
+      <%= if is_nil(@summary.locked) do %>
+        <span class="icon-slot is-empty"></span>
+      <% else %>
+        <span class="icon-slot has-tooltip-top has-tooltip-left-mobile"
+              data-tooltip={if @summary.locked, do: gettext("Locked"), else: gettext("Unlocked")}>
+          <span class={["mdi", if(@summary.locked, do: "mdi-lock", else: "mdi-lock-open-variant")]}></span>
+        </span>
+      <% end %>
+    </div>
+
+    <%= if @summary.is_preconditioning or @summary.climate_keeper_mode == "dog"
+        or (not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2)
+        or (@summary.state != :driving and @summary.is_user_present)
+        or @summary.windows_open or @summary.doors_open
+        or @summary.sentry_mode or @summary.center_display_state == 7
+        or @summary.update_available
+        or (not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr))
+        or @summary.healthy == false do %>
+      <div class="warn-strip">
         <%= if @summary.is_preconditioning do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Preconditioning")}
-          >
-            <span class="mdi mdi-air-conditioner"></span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Preconditioning")}><span class="mdi mdi-air-conditioner"></span></span>
         <% end %>
         <%= if @summary.climate_keeper_mode == "dog" do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Dog Mode")}
-          >
-            <span class="mdi mdi-dog-side"></span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Dog Mode")}><span class="mdi mdi-dog-side"></span></span>
         <% end %>
         <%= if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2 do %>
-          <span
-            class="icon has-text-link has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Reduced Battery Range")}
-          >
-            <span class="mdi mdi-snowflake"></span>
-          </span>
+          <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
         <% end %>
         <%= if @summary.state != :driving and @summary.is_user_present do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Driver present")}
-          >
-            <span class="mdi mdi-account"></span>
-          </span>
-        <% end %>
-        <%= if @summary.plugged_in == true do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Plugged In")}
-          >
-            <span class="mdi mdi-power-plug"></span>
-          </span>
-        <% end %>
-        <%= unless is_nil(@summary.latitude) or is_nil(@summary.longitude) do %>
-          <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                  class: "icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile",
-                  data: [tooltip: gettext("View car location on Google Maps")] do %>
-            <span class="mdi mdi-map-marker"></span>
-          <% end %>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
         <% end %>
         <%= if @summary.windows_open do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Windows open")}
-          >
-            <span class="mdi mdi-window-open"></span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
         <% end %>
         <%= if @summary.doors_open do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Doors open")}
-          >
-            <span class="mdi mdi-car-door"></span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
         <% end %>
         <%= if @summary.sentry_mode do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Sentry Mode")}
-          >
-            <span class="mdi mdi-shield-check"></span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Sentry Mode")}><span class="mdi mdi-shield-check"></span></span>
         <% end %>
         <%= if @summary.center_display_state == 7 do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Sentry Mode recording")}
-          >
-            <span class="mdi mdi-cctv"></span>
-          </span>
-        <% end %>
-        <%= unless is_nil(@summary.locked) do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={if @summary.locked, do: gettext("Locked"), else: gettext("Unlocked")}
-          >
-            <span class={[
-              "mdi",
-              if(@summary.locked, do: "mdi-lock", else: "mdi-lock-open-variant")
-            ]}>
-            </span>
-          </span>
+          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Sentry Mode recording")}><span class="mdi mdi-cctv"></span></span>
         <% end %>
         <%= if @summary.update_available do %>
-          <span
-            class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={
-              gettext("Software Update available (%{version})", version: @summary.update_version)
-            }
-          >
-            <span class="mdi mdi-gift-outline"></span>
-          </span>
+          <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version)}><span class="mdi mdi-gift-outline"></span></span>
         <% end %>
-        <%= unless is_nil(@summary.tpms_soft_warning_fl) or is_nil(@summary.tpms_soft_warning_fr) or is_nil(@summary.tpms_soft_warning_rl) or is_nil(@summary.tpms_soft_warning_rr) do %>
-          <%= if @summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr do %>
-            <% tires = [
-              {:fl, {@summary.tpms_soft_warning_fl, @summary.tpms_pressure_fl}},
-              {:fr, {@summary.tpms_soft_warning_fr, @summary.tpms_pressure_fr}},
-              {:rl, {@summary.tpms_soft_warning_rl, @summary.tpms_pressure_rl}},
-              {:rr, {@summary.tpms_soft_warning_rr, @summary.tpms_pressure_rr}}
-            ] %>
-
-            <% tire_warnings =
-              Enum.filter(tires, fn {_tire, {warn, _}} -> warn end)
-              |> Enum.map(fn
-                {:fl, {true, val}} ->
-                  "Front left (#{format_tpms(val, @settings.unit_of_pressure)})"
-
-                {:fr, {true, val}} ->
-                  "Front right (#{format_tpms(val, @settings.unit_of_pressure)})"
-
-                {:rl, {true, val}} ->
-                  "Rear left (#{format_tpms(val, @settings.unit_of_pressure)})"
-
-                {:rr, {true, val}} ->
-                  "Rear right (#{format_tpms(val, @settings.unit_of_pressure)})"
-
-                _ ->
-                  nil
-              end)
-              |> Enum.filter(& &1) %>
-
-            <span
-              class="icon has-text-grey-dark has-tooltip-top has-tooltip-left-mobile"
-              data-tooltip={
-                if length(tire_warnings) == 1 do
-                  "Tire with low pressure: #{Enum.join(tire_warnings, ", ")}"
-                else
-                  "Tires with low pressure: #{Enum.join(tire_warnings, ", ")}"
-                end
-              }
-            >
-              <span class="mdi mdi-car-tire-alert"></span>
-            </span>
-          <% end %>
+        <%= if not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr) do %>
+          <span class="warn-pill is-danger has-tooltip-top" data-tooltip="Low tire pressure"><span class="mdi mdi-car-tire-alert"></span></span>
         <% end %>
         <%= if @summary.healthy == false do %>
-          <span
-            class="icon has-text-danger has-tooltip-top has-tooltip-left-mobile"
-            data-tooltip={gettext("Health check failed")}
-          >
-            <span class="mdi mdi-alert-box"></span>
-          </span>
+          <span class="warn-pill is-danger has-tooltip-top" data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
         <% end %>
       </div>
-
-
+    <% end %>
     <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
       <div class="driving-panel">
         <span class="icon"><i class="mdi mdi-speedometer"></i></span>
