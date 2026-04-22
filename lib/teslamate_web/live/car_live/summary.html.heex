@@ -38,7 +38,7 @@
           </span>
           <span class="warn-strip warn-strip-inline">
             <span class={"warn-pill is-info has-tooltip-top #{if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
-            <span class={"warn-pill has-tooltip-top #{if @summary.state != :driving and @summary.is_user_present, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
+            <span class={"warn-pill has-tooltip-top #{if @summary.state != :driving && @summary.is_user_present == true, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
             <span class={"warn-pill has-tooltip-top #{if @summary.windows_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
             <span class={"warn-pill has-tooltip-top #{if @summary.doors_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
             <span class={"warn-pill is-info has-tooltip-top #{if @summary.update_available, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version || "—")}><span class="mdi mdi-gift-outline"></span></span>
