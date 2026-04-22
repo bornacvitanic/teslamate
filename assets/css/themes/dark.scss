@@ -167,6 +167,13 @@
 
     .status-line .status-extra { color: hsl(20, 85%, 65%); }
 
+    // Dark-map overlay: a slightly heavier dark wash so header/icons
+    // stand out against the already-dark CartoDB DarkMatter tiles.
+    .car-top > .car-head,
+    .car-top > .icons-row {
+      background: rgba(0, 0, 0, 0.4);
+    }
+
     .climate-detail {
       color: rgba(204, 204, 220, 0.75);
       .icon { color: rgba(204, 204, 220, 0.55); }

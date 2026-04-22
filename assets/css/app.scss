@@ -158,12 +158,14 @@ nav.navbar {
     }
   }
 
-  // Top section: header (.car-head) + .card-map + icons-row stacked
-  // so the map fills the whole top area as a background, with header +
-  // icons sitting on top via semi-transparent bg.
+  // Top section: header (.car-head) + .card-map + icons-row.
+  // .car-top is a flex column so header sits at the top and icons-row
+  // anchors at the bottom. The map is absolutely positioned behind them.
   .car-top {
     position: relative;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     min-height: 340px;
     margin: 0 -0.4rem 0.5rem;
   }
@@ -183,14 +185,25 @@ nav.navbar {
   .car-top > .icons-row {
     position: relative;
     z-index: 2;
-    background: hsla(0, 0%, 100%, 0.72);
+    background: rgba(0, 0, 0, 0.22);
+    color: hsla(0, 0%, 100%, 0.95);
   }
   .car-top > .car-head {
     padding: 0.6rem 0.8rem 0.4rem;
     margin-bottom: 0 !important;
+
+    // Override dark text inside the overlay for readability on map tiles.
+    .title.is-5 { color: hsla(0, 0%, 100%, 0.98); }
+    .mini-battery { color: hsla(0, 0%, 100%, 0.95); }
+    .mini-battery.is-offline { color: hsla(0, 0%, 100%, 0.65); }
+    .status-line,
+    .status-line .status-text { color: hsla(0, 0%, 100%, 0.85); }
   }
   .car-top > .icons-row {
     padding: 0.75rem 0.5rem;
+    color: hsla(0, 0%, 100%, 0.9);
+    .icon-slot { color: hsla(0, 0%, 100%, 0.92) !important; }
+    .icon-slot.is-muted { color: hsla(0, 0%, 100%, 0.45) !important; }
   }
 
   @include mx.tablet {
