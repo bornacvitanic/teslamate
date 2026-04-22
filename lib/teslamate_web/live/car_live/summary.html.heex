@@ -85,13 +85,19 @@
         </span>
       <% end %>
 
-      <%= if is_nil(@summary.locked) do %>
-        <span class="icon-slot is-empty"></span>
-      <% else %>
-        <span class="icon-slot has-tooltip-top has-tooltip-left-mobile"
-              data-tooltip={if @summary.locked, do: gettext("Locked"), else: gettext("Unlocked")}>
-          <span class={["mdi", if(@summary.locked, do: "mdi-lock", else: "mdi-lock-open-variant")]}></span>
-        </span>
+      <%= cond do %>
+        <% @summary.locked == true -> %>
+          <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Locked")}>
+            <span class="mdi mdi-lock"></span>
+          </span>
+        <% @summary.locked == false -> %>
+          <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Unlocked")}>
+            <span class="mdi mdi-lock-open-variant"></span>
+          </span>
+        <% true -> %>
+          <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Lock state unknown (car offline)">
+            <span class="mdi mdi-lock-outline"></span>
+          </span>
       <% end %>
     </div>
 
