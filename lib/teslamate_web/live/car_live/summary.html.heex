@@ -195,7 +195,7 @@
     <% end %>
 
     <div class="menu-list">
-      <details class="menu-row">
+      <details class="menu-row" id="menu-controls" phx-hook="DetailsPersist" data-key="controls">
         <summary class="menu-summary">
           <span class="menu-icon icon"><i class="mdi mdi-car-cog"></i></span>
           <div class="menu-text">
@@ -249,7 +249,7 @@
         </div>
       </details>
 
-      <details class="menu-row">
+      <details class="menu-row" id="menu-climate" phx-hook="DetailsPersist" data-key="climate">
         <summary class="menu-summary">
           <span class="menu-icon icon"><i class="mdi mdi-thermostat"></i></span>
           <div class="menu-text">
@@ -302,7 +302,7 @@
         </div>
       </details>
 
-      <details class="menu-row">
+      <details class="menu-row" id="menu-location" phx-hook="DetailsPersist" data-key="location">
         <summary class="menu-summary">
           <span class="menu-icon icon"><i class="mdi mdi-map-marker-outline"></i></span>
           <div class="menu-text">
@@ -310,6 +310,8 @@
             <div class="menu-sub">
               <%= cond do
                 @summary.state == :driving -> "On the road"
+                is_map(@widget) && @widget[:home_distance_km] && @widget.home_distance_km > 0.3 ->
+                  "#{@widget.home_distance_km} km from home"
                 is_map(@widget) && @widget.last_drive && drive_endpoint_name(@widget.last_drive) ->
                   "At #{drive_endpoint_name(@widget.last_drive)}"
                 true -> "See map"
@@ -346,7 +348,7 @@
         </div>
       </details>
 
-      <details class="menu-row">
+      <details class="menu-row" id="menu-charging" phx-hook="DetailsPersist" data-key="charging">
         <summary class="menu-summary">
           <span class="menu-icon icon"><i class="mdi mdi-ev-station"></i></span>
           <div class="menu-text">
@@ -355,6 +357,8 @@
               <%= cond do
                 @summary.state == :charging and not is_nil(@summary.battery_level) ->
                   "Charging · #{@summary.battery_level}%"
+                @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] ->
+                  "Plugged in · scheduled"
                 @summary.plugged_in == true and not is_nil(@summary.battery_level) ->
                   "Plugged in · #{@summary.battery_level}%"
                 not is_nil(@summary.battery_level) ->
@@ -366,6 +370,17 @@
           <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
         </summary>
         <div class="menu-body">
+          <%= if @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
+            <div class="sched-banner">
+              <span class="icon"><i class="mdi mdi-clock-outline"></i></span>
+              <span>Scheduled to start at
+                <%= tag(:span,
+                  data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
+                  phx_hook: "LocalTime",
+                  id: "sched_start_body_#{@car.id}"
+                ) %></span>
+            </div>
+          <% end %>
           <%= if not is_nil(@summary.battery_level) do %>
             <% lvl = @summary.usable_battery_level || @summary.battery_level %>
             <% raw_lvl = @summary.battery_level %>
@@ -471,7 +486,7 @@
         </div>
       </details>
 
-      <details class="menu-row">
+      <details class="menu-row" id="menu-trip-stats" phx-hook="DetailsPersist" data-key="trip-stats">
         <summary class="menu-summary">
           <span class="menu-icon icon"><i class="mdi mdi-chart-timeline-variant"></i></span>
           <div class="menu-text">
@@ -480,6 +495,8 @@
               <%= cond do
                 is_map(@widget) && @widget.today && @widget.today.km > 0 ->
                   "#{@widget.today.km} km today · #{@widget.today.trips} trip#{if @widget.today.trips == 1, do: "", else: "s"}"
+                is_map(@widget) && @widget[:car_age_days] ->
+                  "Tracked for #{@widget.car_age_days} days"
                 true -> "Drives, charges, last activity"
               end %>
             </div>

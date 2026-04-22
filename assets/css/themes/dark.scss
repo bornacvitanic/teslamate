@@ -141,6 +141,11 @@
       }
     }
 
+    .sched-banner {
+      background: hsla(36, 90%, 55%, 0.15);
+      color: hsl(36, 85%, 72%);
+    }
+
     .mini-battery.is-charging { color: hsl(141, 60%, 65%); }
     .mini-battery.is-online { color: rgba(204, 204, 220, 0.85); }
     .mini-battery.is-offline { color: rgba(204, 204, 220, 0.4); }
@@ -191,9 +196,6 @@
       a:hover { color: rgb(110, 159, 255); }
     }
 
-    .menu-list > .menu-row + .menu-row {
-      border-top-color: rgba(204, 204, 220, 0.1);
-    }
     .menu-summary {
       .menu-icon   { color: rgba(204, 204, 220, 0.6); }
       .menu-title  { color: rgba(204, 204, 220, 0.95); }

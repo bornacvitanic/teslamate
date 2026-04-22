@@ -679,10 +679,6 @@ nav.navbar {
     flex-direction: column;
     padding: 0.25rem 0 0;
     margin: 0 1rem;
-
-    > .menu-row + .menu-row {
-      border-top: 1px solid hsl(0, 0%, 90%);
-    }
   }
 
   .menu-row {
@@ -736,6 +732,18 @@ nav.navbar {
   .menu-body {
     padding: 0.25rem 0 1rem;
     > * + * { margin-top: 0.75rem; }
+  }
+
+  .sched-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    background: hsla(36, 90%, 55%, 0.1);
+    border-radius: 8px;
+    color: hsl(36, 70%, 35%);
+    font-size: 0.85rem;
+    .icon { font-size: 1rem; }
   }
 
   // Footer: model, odometer, firmware at the bottom of the summary card.

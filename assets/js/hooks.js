@@ -260,6 +260,37 @@ export const TriggerChange = {
   },
 };
 
+// Persist <details> open state across LiveView DOM patches by saving
+// each element's open flag in localStorage under its data-key.
+export const DetailsPersist = {
+  mounted() {
+    this._restore();
+    this.el.addEventListener("toggle", () => {
+      try {
+        localStorage.setItem(
+          "details-open:" + this.el.dataset.key,
+          this.el.open ? "1" : "0",
+        );
+      } catch (_) {
+        /* localStorage disabled */
+      }
+    });
+  },
+  updated() {
+    this._restore();
+  },
+  _restore() {
+    try {
+      const k = "details-open:" + this.el.dataset.key;
+      const v = localStorage.getItem(k);
+      if (v === "1") this.el.open = true;
+      else if (v === "0") this.el.open = false;
+    } catch (_) {
+      /* no-op */
+    }
+  },
+};
+
 // Confirm-before-delete for the bulk action button.
 export const ConfirmBulkDelete = {
   mounted() {

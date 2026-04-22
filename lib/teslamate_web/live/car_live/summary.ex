@@ -451,6 +451,10 @@ defmodule TeslaMateWeb.CarLive.Summary do
     # Live voltage + amperage from the latest charge row of the active session.
     charging_power = fetch_charging_power_detail(car_id)
 
+    # Extra summary data
+    car_age_days = fetch_car_age_days(car_id)
+    home_distance_km = compute_home_distance_km(car_id)
+
     # Current mounted tire set (if tyre_mounts table has an open mount)
     tire_info = fetch_tire_info(car_id)
 
@@ -478,8 +482,69 @@ defmodule TeslaMateWeb.CarLive.Summary do
       tire: tire_info,
       battery_health: battery_health,
       efficiency: efficiency,
-      charging_power: charging_power
+      charging_power: charging_power,
+      car_age_days: car_age_days,
+      home_distance_km: home_distance_km
     }
+  end
+
+  defp fetch_car_age_days(car_id) do
+    case Repo.one(
+           from d in Drive,
+             where: d.car_id == ^car_id,
+             select: min(d.start_date)
+         ) do
+      %DateTime{} = first ->
+        div(DateTime.diff(DateTime.utc_now(), first, :second), 86_400)
+
+      _ ->
+        nil
+    end
+  end
+
+  # Haversine distance (km) from the latest position to the home geofence.
+  defp compute_home_distance_km(car_id) do
+    home =
+      Repo.one(
+        from g in GeoFence,
+          left_join: d in Drive,
+          on: d.start_geofence_id == g.id or d.end_geofence_id == g.id,
+          where: is_nil(d.car_id) or d.car_id == ^car_id,
+          group_by: g.id,
+          order_by: [desc: count(d.id)],
+          limit: 1,
+          select: %{lat: type(g.latitude, :float), lng: type(g.longitude, :float)}
+      )
+
+    pos =
+      Repo.one(
+        from p in "positions",
+          where: p.car_id == ^car_id,
+          order_by: [desc: p.date],
+          limit: 1,
+          select: %{lat: p.latitude, lng: p.longitude}
+      )
+
+    with %{lat: hlat, lng: hlng} when is_number(hlat) and is_number(hlng) <- home,
+         %{lat: plat, lng: plng} <- pos,
+         plat_f when is_number(plat_f) <- decimal_to_float(plat),
+         plng_f when is_number(plng_f) <- decimal_to_float(plng) do
+      Float.round(haversine_km(hlat, hlng, plat_f, plng_f), 1)
+    else
+      _ -> nil
+    end
+  end
+
+  defp haversine_km(lat1, lng1, lat2, lng2) do
+    r = 6371.0
+    dlat = :math.pi() * (lat2 - lat1) / 180.0
+    dlng = :math.pi() * (lng2 - lng1) / 180.0
+    a =
+      :math.sin(dlat / 2) * :math.sin(dlat / 2) +
+        :math.cos(:math.pi() * lat1 / 180.0) * :math.cos(:math.pi() * lat2 / 180.0) *
+          :math.sin(dlng / 2) * :math.sin(dlng / 2)
+
+    2 * r * :math.atan2(:math.sqrt(a), :math.sqrt(1 - a))
   end
 
   # Latest voltage/current reading for the currently active charging session,
