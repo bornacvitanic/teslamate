@@ -158,6 +158,19 @@
 
     .icons-row { color: rgba(204, 204, 220, 0.55); }
     .icons-row .icon-slot.is-muted { color: rgba(204, 204, 220, 0.25) !important; }
+    .icons-row .icon-slot.is-active { color: rgba(204, 204, 220, 0.95) !important; }
+    .icons-row .icon-slot.is-sentry-armed,
+    .icons-row .icon-slot.is-sentry-armed .mdi { color: rgba(204, 204, 220, 0.85) !important; }
+    .icons-row .icon-slot.is-sentry-recording {
+      border-color: rgba(204, 204, 220, 0.65);
+    }
+
+    .status-line .status-extra { color: hsl(20, 85%, 65%); }
+
+    .climate-detail {
+      color: rgba(204, 204, 220, 0.75);
+      .icon { color: rgba(204, 204, 220, 0.55); }
+    }
 
     .warn-strip .warn-pill {
       background: rgba(204, 204, 220, 0.08);

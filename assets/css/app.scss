@@ -494,17 +494,44 @@ nav.navbar {
       flex: 0 0 auto;
       animation: spinAround 0.7s linear infinite;
     }
+
+    .status-extra {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      color: hsl(20, 80%, 48%);
+      .mdi { font-size: 1.1rem; }
+    }
+  }
+
+  // Climate expand: fan / driver temp / passenger temp / defrosters.
+  .climate-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    padding: 0.25rem 0 0.25rem;
+    font-size: 0.85rem;
+    color: hsl(0, 0%, 40%);
+
+    .cd-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .icon { color: hsl(0, 0%, 55%); font-size: 0.95rem; }
   }
 
   // Collapse the excessive bottom margin on the media block above the map.
   .car-head { margin-bottom: 0.25rem !important; }
   .card-content .title.is-5 { margin-bottom: 0.1rem; }
 
-  // Tesla-app icons row: 3 equal slots (lock / charging bolt / location).
+  // Tesla-app icons row: 5 equal slots
+  // (lock / climate fan / charging bolt / sentry / location).
   // The sync spinner lives next to the status line above the map.
   .icons-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     align-items: center;
     justify-items: center;
     padding: 1rem 0.75rem;
@@ -526,7 +553,31 @@ nav.navbar {
     }
     .icon-slot.is-empty { visibility: hidden; }
     .icon-slot.is-muted { color: hsl(0, 0%, 80%) !important; }
+    .icon-slot.is-active { color: hsl(0, 0%, 25%) !important; }
     .icon-slot .mdi { font-size: 1.75rem; line-height: 1; }
+
+    // Sentry indicator — armed = gray ring with red dot, recording = red filled.
+    .icon-slot.is-sentry-armed .mdi,
+    .icon-slot.is-sentry-armed { color: hsl(0, 0%, 35%) !important; }
+    .icon-slot.is-sentry-recording {
+      position: relative;
+      width: 2.25rem; height: 2.25rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 2px solid hsl(0, 0%, 35%);
+      border-radius: 999px;
+      box-sizing: border-box;
+      .sentry-dot {
+        display: block;
+        width: 0.85rem; height: 0.85rem;
+        border-radius: 999px;
+        background: hsl(348, 80%, 55%);
+        animation: state-pulse 1.2s ease-in-out infinite;
+      }
+    }
+    @keyframes state-pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
 
     // Spinner is always visible. Idle: muted gray ring, not spinning.
     // Syncing: bright white ring, spinning. Higher-specificity selectors and
@@ -674,12 +725,15 @@ nav.navbar {
   }
 
   // Tesla-app style menu list: expandable rows.
+  // Match horizontal inset of the card title above (which sits at the
+  // card-content padding). Menu icons / chevrons align with car name.
   .menu-list {
     display: flex;
     flex-direction: column;
     padding: 0.25rem 0 0;
-    margin: 0 1rem;
+    margin: 0;
   }
+  .menu-summary { padding-left: 0 !important; padding-right: 0 !important; }
 
   .menu-row {
     // native <details>

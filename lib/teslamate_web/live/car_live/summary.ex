@@ -41,7 +41,7 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
     {geofences_json, home_geofence_id} = fetch_geofences_for_map(car.id)
 
-    summary = fill_last_known_tpms(summary, car.id)
+    {summary, climate_extra} = fill_last_known_tpms(summary, car.id)
 
     assigns = %{
       car: car,
@@ -59,7 +59,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
       widget: nil,
       weather: :loading,
       geofences_json: geofences_json,
-      home_geofence_id: home_geofence_id
+      home_geofence_id: home_geofence_id,
+      climate_extra: climate_extra
     }
 
     socket = assign(socket, assigns)
@@ -103,39 +104,57 @@ defmodule TeslaMateWeb.CarLive.Summary do
   defp decimal_to_float(n) when is_number(n), do: n * 1.0
   defp decimal_to_float(_), do: nil
 
-  # When the car is offline the live Summary has nil tpms_pressure_* fields.
-  # Fall back to the latest positions row (covered by the car_id+date index).
-  # We pick the most recent row — any tpms nils in it we just leave as nil,
-  # rather than filtering — filtering would scan a huge chunk of positions.
+  # Fall back to the latest positions row for fields missing on the live
+  # Summary when the car is offline, and for fields TeslaMate never exposes
+  # on Summary (fan_status, temp settings, battery_heater, defrosters...).
+  # Returns {summary, climate_extra_map}.
+  # ONE DB query, uses idx_positions_car_id_date_desc (covering, fast).
   defp fill_last_known_tpms(%Summary{} = s, car_id) do
-    if is_nil(s.tpms_pressure_fl) or is_nil(s.tpms_pressure_fr) or
-         is_nil(s.tpms_pressure_rl) or is_nil(s.tpms_pressure_rr) do
-      case Repo.one(
-             from p in "positions",
-               where: p.car_id == ^car_id,
-               order_by: [desc: p.date],
-               limit: 1,
-               select: %{
-                 fl: p.tpms_pressure_fl,
-                 fr: p.tpms_pressure_fr,
-                 rl: p.tpms_pressure_rl,
-                 rr: p.tpms_pressure_rr
-               }
-           ) do
-        %{fl: fl, fr: fr, rl: rl, rr: rr} ->
-          %{
-            s
-            | tpms_pressure_fl: s.tpms_pressure_fl || decimal_to_float(fl),
-              tpms_pressure_fr: s.tpms_pressure_fr || decimal_to_float(fr),
-              tpms_pressure_rl: s.tpms_pressure_rl || decimal_to_float(rl),
-              tpms_pressure_rr: s.tpms_pressure_rr || decimal_to_float(rr)
+    row =
+      Repo.one(
+        from p in "positions",
+          where: p.car_id == ^car_id,
+          order_by: [desc: p.date],
+          limit: 1,
+          select: %{
+            tpms_fl: p.tpms_pressure_fl,
+            tpms_fr: p.tpms_pressure_fr,
+            tpms_rl: p.tpms_pressure_rl,
+            tpms_rr: p.tpms_pressure_rr,
+            fan_status: p.fan_status,
+            driver_temp: p.driver_temp_setting,
+            passenger_temp: p.passenger_temp_setting,
+            is_climate_on: p.is_climate_on,
+            is_front_defroster_on: p.is_front_defroster_on,
+            is_rear_defroster_on: p.is_rear_defroster_on,
+            battery_heater: p.battery_heater
           }
+      )
 
-        _ ->
+    case row do
+      nil ->
+        {s, nil}
+
+      %{} = r ->
+        merged = %{
           s
-      end
-    else
-      s
+          | tpms_pressure_fl: s.tpms_pressure_fl || decimal_to_float(r.tpms_fl),
+            tpms_pressure_fr: s.tpms_pressure_fr || decimal_to_float(r.tpms_fr),
+            tpms_pressure_rl: s.tpms_pressure_rl || decimal_to_float(r.tpms_rl),
+            tpms_pressure_rr: s.tpms_pressure_rr || decimal_to_float(r.tpms_rr)
+        }
+
+        climate_extra = %{
+          fan_status: r.fan_status,
+          driver_temp: decimal_to_float(r.driver_temp),
+          passenger_temp: decimal_to_float(r.passenger_temp),
+          front_defrost: r.is_front_defroster_on,
+          rear_defrost: r.is_rear_defroster_on,
+          battery_heater: r.battery_heater,
+          is_climate_on_fallback: r.is_climate_on
+        }
+
+        {merged, climate_extra}
     end
   end
 
@@ -184,10 +203,15 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   def handle_info(%Summary{since: since} = summary, socket) do
-    summary = fill_last_known_tpms(summary, socket.assigns.car.id)
+    {summary, climate_extra} = fill_last_known_tpms(summary, socket.assigns.car.id)
 
     socket =
-      assign(socket, summary: summary, duration: humanize_duration(since), loading: false)
+      assign(socket,
+        summary: summary,
+        climate_extra: climate_extra,
+        duration: humanize_duration(since),
+        loading: false
+      )
 
     # If weather hasn't loaded yet and we now have valid coords, kick off a fetch.
     # This covers the offline-car case where the initial Summary had no lat/lng.
@@ -257,6 +281,14 @@ defmodule TeslaMateWeb.CarLive.Summary do
   def format_temp(c, _unit) when is_number(c) do
     "#{c} °C"
   end
+
+  def format_scheduled_time(%DateTime{} = dt, tz) do
+    dt
+    |> DateTime.shift_zone!(if tz_valid?(tz), do: tz, else: @fallback_tz)
+    |> Calendar.strftime("%H:%M")
+  end
+
+  def format_scheduled_time(_, _), do: nil
 
   def format_eur(val), do: format_money(val, 2)
   def format_eur_km(val), do: format_money(val, 3)
@@ -418,6 +450,26 @@ defmodule TeslaMateWeb.CarLive.Summary do
           select: coalesce(sum(d.distance), 0.0)
       )
 
+    # km year-to-date (Jan 1 of current year, in tz)
+    year_start_utc = year_start_utc(tz)
+
+    ytd_km =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id and d.start_date >= ^year_start_utc,
+          select: coalesce(sum(d.distance), 0.0)
+      )
+
+    # km in trailing 12 months
+    twelve_mo_cutoff = DateTime.add(DateTime.utc_now(), -365 * 86_400, :second)
+
+    trailing_12mo_km =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id and d.start_date >= ^twelve_mo_cutoff,
+          select: coalesce(sum(d.distance), 0.0)
+      )
+
     # Lifetime ICE-equivalent cost using actual fuel prices per drive
     ice_cost_lifetime =
       Repo.one(
@@ -477,7 +529,18 @@ defmodule TeslaMateWeb.CarLive.Summary do
         month_sessions: month_charge.sessions || 0,
         month_km: month_km_f,
         cost_per_km: cost_per_km_month,
-        savings_lifetime: savings
+        savings_lifetime: savings,
+        month_eur_per_kwh:
+          if to_float(month_charge.kwh) > 0.0 do
+            month_cost_eur / to_float(month_charge.kwh)
+          else
+            nil
+          end
+      },
+      trip: %{
+        month_km: round(month_km_f),
+        ytd_km: round(to_float(ytd_km)),
+        trailing_12mo_km: round(to_float(trailing_12mo_km))
       },
       tire: tire_info,
       battery_health: battery_health,
@@ -707,6 +770,13 @@ defmodule TeslaMateWeb.CarLive.Summary do
     now_local = DateTime.now!(tz)
     %{year: y, month: m} = now_local
     DateTime.new!(Date.new!(y, m, 1), ~T[00:00:00], tz)
+    |> DateTime.shift_zone!("Etc/UTC")
+  end
+
+  defp year_start_utc(tz) do
+    tz = if tz_valid?(tz), do: tz, else: @fallback_tz
+    now_local = DateTime.now!(tz)
+    DateTime.new!(Date.new!(now_local.year, 1, 1), ~T[00:00:00], tz)
     |> DateTime.shift_zone!("Etc/UTC")
   end
 

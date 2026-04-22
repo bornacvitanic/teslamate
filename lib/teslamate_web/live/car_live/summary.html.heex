@@ -32,6 +32,11 @@
             aria-hidden="true"
           ></span>
           <span class="status-text"><%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %></span>
+          <%= if is_map(@climate_extra) and @climate_extra.battery_heater == true do %>
+            <span class="status-extra has-tooltip-top" data-tooltip="Battery heater on">
+              <span class="mdi mdi-heat-wave"></span>
+            </span>
+          <% end %>
         </div>
       </div>
     </div>
@@ -61,7 +66,8 @@
         disabled
       />
         </div>
-    <div class="icons-row icons-row-3">
+    <div class="icons-row icons-row-5">
+      <%# 1. Lock %>
       <%= cond do %>
         <% @summary.locked == true -> %>
           <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Locked")}>
@@ -72,11 +78,30 @@
             <span class="mdi mdi-lock-open-variant"></span>
           </span>
         <% true -> %>
-          <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Lock state unknown (car offline)">
+          <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip="Lock state unknown">
             <span class="mdi mdi-lock-outline"></span>
           </span>
       <% end %>
 
+      <%# 2. Climate (fan) %>
+      <% climate_tip =
+        cond do
+          @summary.is_preconditioning -> "Preconditioning"
+          @summary.climate_keeper_mode in ["on", "camp", "park"] -> "Climate keep (#{@summary.climate_keeper_mode})"
+          @summary.climate_keeper_mode == "dog" -> "Dog Mode"
+          @summary.is_climate_on == true -> "Climate on"
+          @summary.is_climate_on == false -> "Climate off"
+          true -> "Climate status unknown"
+        end %>
+      <% climate_active =
+        @summary.is_climate_on == true or @summary.is_preconditioning == true or
+          @summary.climate_keeper_mode not in [nil, "off"] %>
+      <span class={"icon-slot has-tooltip-top has-tooltip-left-mobile #{if climate_active, do: "is-active", else: "is-muted"}"}
+            data-tooltip={climate_tip}>
+        <span class={"mdi #{if climate_active, do: "mdi-fan", else: "mdi-fan-off"}"}></span>
+      </span>
+
+      <%# 3. Charging bolt %>
       <%= cond do %>
         <% @summary.state == :charging -> %>
           <span class="icon-slot has-tooltip-top has-tooltip-left-mobile" data-tooltip={gettext("Charging")}>
@@ -92,6 +117,30 @@
           </span>
       <% end %>
 
+      <%# 4. Sentry %>
+      <% sentry_tip =
+        cond do
+          @summary.center_display_state == 7 -> "Sentry recording"
+          @summary.sentry_mode == true -> "Sentry armed"
+          @summary.sentry_mode == false -> "Sentry off"
+          true -> "Sentry status unknown"
+        end %>
+      <%= cond do %>
+        <% @summary.center_display_state == 7 -> %>
+          <span class="icon-slot is-sentry-recording has-tooltip-top has-tooltip-left-mobile" data-tooltip={sentry_tip}>
+            <span class="sentry-dot"></span>
+          </span>
+        <% @summary.sentry_mode == true -> %>
+          <span class="icon-slot is-sentry-armed has-tooltip-top has-tooltip-left-mobile" data-tooltip={sentry_tip}>
+            <span class="mdi mdi-record-circle-outline"></span>
+          </span>
+        <% true -> %>
+          <span class="icon-slot is-muted has-tooltip-top has-tooltip-left-mobile" data-tooltip={sentry_tip}>
+            <span class="mdi mdi-record-circle-outline"></span>
+          </span>
+      <% end %>
+
+      <%# 5. Location %>
       <%= if not is_nil(@summary.latitude) and not is_nil(@summary.longitude) do %>
         <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
                 target: "_blank",
@@ -106,12 +155,6 @@
     </div>
 
     <div class="warn-strip">
-        <%= if @summary.is_preconditioning do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Preconditioning")}><span class="mdi mdi-air-conditioner"></span></span>
-        <% end %>
-        <%= if @summary.climate_keeper_mode == "dog" do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Dog Mode")}><span class="mdi mdi-dog-side"></span></span>
-        <% end %>
         <%= if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2 do %>
           <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
         <% end %>
@@ -123,12 +166,6 @@
         <% end %>
         <%= if @summary.doors_open do %>
           <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
-        <% end %>
-        <%= if @summary.sentry_mode do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Sentry Mode")}><span class="mdi mdi-shield-check"></span></span>
-        <% end %>
-        <%= if @summary.center_display_state == 7 do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Sentry Mode recording")}><span class="mdi mdi-cctv"></span></span>
         <% end %>
         <%= if @summary.update_available do %>
           <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version)}><span class="mdi mdi-gift-outline"></span></span>
@@ -269,6 +306,35 @@
           <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
         </summary>
         <div class="menu-body">
+          <%= if is_map(@climate_extra) do %>
+            <% cx = @climate_extra %>
+            <div class="climate-detail">
+              <%= if not is_nil(cx.fan_status) do %>
+                <span class="cd-item">
+                  <span class="icon"><i class="mdi mdi-fan"></i></span>
+                  <span>Fan <%= cx.fan_status %></span>
+                </span>
+              <% end %>
+              <%= if not is_nil(cx.driver_temp) do %>
+                <span class="cd-item">
+                  <span class="icon"><i class="mdi mdi-account"></i></span>
+                  <span>Driver <%= :erlang.float_to_binary(cx.driver_temp * 1.0, decimals: 1) %>°</span>
+                </span>
+              <% end %>
+              <%= if not is_nil(cx.passenger_temp) do %>
+                <span class="cd-item">
+                  <span class="icon"><i class="mdi mdi-seat-passenger"></i></span>
+                  <span>Passenger <%= :erlang.float_to_binary(cx.passenger_temp * 1.0, decimals: 1) %>°</span>
+                </span>
+              <% end %>
+              <%= if cx.front_defrost == true do %>
+                <span class="cd-item"><span class="icon"><i class="mdi mdi-car-defrost-front"></i></span><span>Front defrost</span></span>
+              <% end %>
+              <%= if cx.rear_defrost == true do %>
+                <span class="cd-item"><span class="icon"><i class="mdi mdi-car-defrost-rear"></i></span><span>Rear defrost</span></span>
+              <% end %>
+            </div>
+          <% end %>
           <div class="weather-strip">
             <%= case @weather do %>
               <% {:ok, days} -> %>
@@ -358,7 +424,7 @@
                 @summary.state == :charging and not is_nil(@summary.battery_level) ->
                   "Charging · #{@summary.battery_level}%"
                 @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] ->
-                  "Plugged in · scheduled"
+                  "Plugged in · scheduled for #{format_scheduled_time(@summary.scheduled_charging_start_time, @tz)}"
                 @summary.plugged_in == true and not is_nil(@summary.battery_level) ->
                   "Plugged in · #{@summary.battery_level}%"
                 not is_nil(@summary.battery_level) ->
@@ -436,6 +502,13 @@
                 <div class="stat-card">
                   <div class="stat-label">Cost / 100 km</div>
                   <div class="stat-value">€<%= format_eur(@widget.cost.cost_per_km * 100.0) %></div>
+                  <div class="stat-sub">this month</div>
+                </div>
+              <% end %>
+              <%= if @widget.cost[:month_eur_per_kwh] do %>
+                <div class="stat-card">
+                  <div class="stat-label">Avg € / kWh</div>
+                  <div class="stat-value">€<%= format_eur_km(@widget.cost.month_eur_per_kwh) %></div>
                   <div class="stat-sub">this month</div>
                 </div>
               <% end %>
@@ -538,6 +611,23 @@
                 </div>
               <% end %>
             </div>
+
+            <%= if @widget[:trip] do %>
+              <div class="stat-row">
+                <div class="stat-card">
+                  <div class="stat-label">This month</div>
+                  <div class="stat-value"><%= @widget.trip.month_km %> <span class="stat-unit">km</span></div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Year to date</div>
+                  <div class="stat-value"><%= @widget.trip.ytd_km %> <span class="stat-unit">km</span></div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Last 12 months</div>
+                  <div class="stat-value"><%= @widget.trip.trailing_12mo_km %> <span class="stat-unit">km</span></div>
+                </div>
+              </div>
+            <% end %>
           <% end %>
         </div>
       </details>
