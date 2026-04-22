@@ -95,15 +95,7 @@
       <% end %>
     </div>
 
-    <%= if @summary.is_preconditioning or @summary.climate_keeper_mode == "dog"
-        or (not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2)
-        or (@summary.state != :driving and @summary.is_user_present)
-        or @summary.windows_open or @summary.doors_open
-        or @summary.sentry_mode or @summary.center_display_state == 7
-        or @summary.update_available
-        or (not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr))
-        or @summary.healthy == false do %>
-      <div class="warn-strip">
+    <div class="warn-strip">
         <%= if @summary.is_preconditioning do %>
           <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Preconditioning")}><span class="mdi mdi-air-conditioner"></span></span>
         <% end %>
@@ -138,7 +130,6 @@
           <span class="warn-pill is-danger has-tooltip-top" data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
         <% end %>
       </div>
-    <% end %>
     <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
       <div class="driving-panel">
         <span class="icon"><i class="mdi mdi-speedometer"></i></span>
