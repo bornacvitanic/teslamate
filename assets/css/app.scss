@@ -158,40 +158,38 @@ nav.navbar {
     }
   }
 
-  // Top section: header (.car-head) + .card-map + icons-row layered on
-  // top of each other so the map fills the whole top area and the header
-  // + icons sit on top with a semi-transparent background.
+  // Top section: header (.car-head) + .card-map + icons-row stacked
+  // so the map fills the whole top area as a background, with header +
+  // icons sitting on top via semi-transparent bg.
   .car-top {
     position: relative;
+    display: block;
+    min-height: 340px;
     margin: 0 -0.4rem 0.5rem;
-    overflow: hidden;
-    border-radius: 0;
   }
-  .car-top .card-map {
+  .car-top > .card-map {
     position: absolute;
-    inset: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     margin: 0;
     z-index: 0;
   }
-  .car-top .card-map .map {
+  .car-top > .card-map .map {
     width: 100% !important;
     height: 100% !important;
+    min-height: 340px;
     border-radius: 0;
   }
-  // Header + icons sit above the map.
-  .car-top .car-head,
-  .car-top .icons-row {
+  .car-top > .car-head,
+  .car-top > .icons-row {
     position: relative;
-    z-index: 1;
-    background: hsla(0, 0%, 100%, 0.78);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    z-index: 2;
+    background: hsla(0, 0%, 100%, 0.72);
   }
-  .car-top .car-head {
+  .car-top > .car-head {
     padding: 0.6rem 0.8rem 0.4rem;
     margin-bottom: 0 !important;
   }
-  .car-top .icons-row {
+  .car-top > .icons-row {
     padding: 0.75rem 0.5rem;
   }
 
