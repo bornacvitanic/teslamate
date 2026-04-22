@@ -887,6 +887,13 @@ nav.navbar {
         display: flex;
         gap: 0.3rem;
         font-weight: 600;
+
+        @media (max-width: 520px) {
+          flex-direction: column;
+          gap: 0.05rem;
+          align-items: center;
+          font-size: 0.72rem;
+        }
       }
       .wd-tmax { color: hsl(20, 70%, 50%); }
       .wd-tmin { color: hsl(210, 50%, 50%); }
@@ -1138,6 +1145,56 @@ main.section {
   .device .select select[disabled] {
     background-color: initial;
   }
+}
+
+// Debug mode: tiny barely-visible corner button; when toggled, html gets
+// [data-debug-mode="all-on"] and all conditional UI becomes visible with
+// a dashed outline so real vs forced visibility is distinguishable.
+.debug-toggle {
+  position: fixed;
+  bottom: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+  background: hsl(0, 0%, 70%);
+  opacity: 0.18;
+  cursor: pointer;
+  z-index: 9999;
+  transition: opacity 0.15s ease;
+}
+.debug-toggle:hover { opacity: 0.7; }
+[data-debug-mode="all-on"] .debug-toggle {
+  background: hsl(348, 80%, 55%);
+  opacity: 0.9;
+}
+
+// Normally hide is-off warn pills and is-conditional-hidden panels.
+.warn-strip .warn-pill.is-off { display: none; }
+.status-line .status-extra.is-off { display: none; }
+.driving-panel.is-conditional-hidden,
+.charging-panel.is-conditional-hidden { display: none; }
+
+// Debug mode reveals them with a dashed outline + reduced opacity.
+[data-debug-mode="all-on"] {
+  .warn-strip .warn-pill.is-off,
+  .status-line .status-extra.is-off {
+    display: inline-flex !important;
+    opacity: 0.5;
+    outline: 1px dashed hsl(0, 0%, 55%);
+    outline-offset: 1px;
+  }
+  .driving-panel.is-conditional-hidden,
+  .charging-panel.is-conditional-hidden {
+    display: block !important;
+    opacity: 0.55;
+    outline: 1px dashed hsl(0, 0%, 55%);
+    outline-offset: 2px;
+  }
+  // Highlight the charging-panel's flex layout even in debug
+  .charging-panel.is-conditional-hidden { display: block !important; }
 }
 
 // =============================================================================

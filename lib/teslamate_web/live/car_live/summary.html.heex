@@ -32,11 +32,9 @@
             aria-hidden="true"
           ></span>
           <span class="status-text"><%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %></span>
-          <%= if is_map(@climate_extra) and @climate_extra.battery_heater == true do %>
-            <span class="status-extra has-tooltip-top" data-tooltip="Battery heater on">
-              <span class="mdi mdi-heat-wave"></span>
-            </span>
-          <% end %>
+          <span class={"status-extra has-tooltip-top #{if is_map(@climate_extra) and @climate_extra.battery_heater == true, do: "is-on", else: "is-off"}"} data-tooltip="Battery heater on">
+            <span class="mdi mdi-heat-wave"></span>
+          </span>
         </div>
       </div>
     </div>
@@ -155,38 +153,21 @@
     </div>
 
     <div class="warn-strip">
-        <%= if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2 do %>
-          <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
-        <% end %>
-        <%= if @summary.state != :driving and @summary.is_user_present do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
-        <% end %>
-        <%= if @summary.windows_open do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
-        <% end %>
-        <%= if @summary.doors_open do %>
-          <span class="warn-pill has-tooltip-top" data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
-        <% end %>
-        <%= if @summary.update_available do %>
-          <span class="warn-pill is-info has-tooltip-top" data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version)}><span class="mdi mdi-gift-outline"></span></span>
-        <% end %>
-        <%= if not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr) do %>
-          <span class="warn-pill is-danger has-tooltip-top" data-tooltip="Low tire pressure"><span class="mdi mdi-car-tire-alert"></span></span>
-        <% end %>
-        <%= if @summary.healthy == false do %>
-          <span class="warn-pill is-danger has-tooltip-top" data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
-        <% end %>
+        <span class={"warn-pill is-info has-tooltip-top #{if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
+        <span class={"warn-pill has-tooltip-top #{if @summary.state != :driving and @summary.is_user_present, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
+        <span class={"warn-pill has-tooltip-top #{if @summary.windows_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
+        <span class={"warn-pill has-tooltip-top #{if @summary.doors_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
+        <span class={"warn-pill is-info has-tooltip-top #{if @summary.update_available, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version || "—")}><span class="mdi mdi-gift-outline"></span></span>
+        <span class={"warn-pill is-danger has-tooltip-top #{if not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr), do: "is-on", else: "is-off"}"} data-tooltip="Low tire pressure"><span class="mdi mdi-car-tire-alert"></span></span>
+        <span class={"warn-pill is-danger has-tooltip-top #{if @summary.healthy == false, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
       </div>
-    <%= if @summary.state == :driving and not is_nil(@summary.speed) do %>
-      <div class="driving-panel">
+    <div class={"driving-panel #{unless @summary.state == :driving and not is_nil(@summary.speed), do: "is-conditional-hidden"}"}>
         <span class="icon"><i class="mdi mdi-speedometer"></i></span>
         <span class="drv-speed"><%= @summary.speed %></span>
         <span class="drv-unit"><%= if @settings.unit_of_length == :mi, do: "mph", else: "km/h" %></span>
-      </div>
-    <% end %>
+    </div>
 
-    <%= if @summary.state == :charging do %>
-      <div class="charging-panel">
+    <div class={"charging-panel #{unless @summary.state == :charging, do: "is-conditional-hidden"}"}>
         <div class="charging-row charging-row-main">
           <span class="charging-lhs">
             <%= if not is_nil(@summary.charge_limit_soc) do %>
@@ -228,8 +209,7 @@
             </span>
           </div>
         <% end %>
-      </div>
-    <% end %>
+    </div>
 
     <div class="menu-list">
       <details class="menu-row" id="menu-controls" phx-hook="DetailsPersist" data-key="controls">
@@ -610,10 +590,7 @@
                   </div>
                 </div>
               <% end %>
-            </div>
-
-            <%= if @widget[:trip] do %>
-              <div class="stat-row">
+              <%= if @widget[:trip] do %>
                 <div class="stat-card">
                   <div class="stat-label">This month</div>
                   <div class="stat-value"><%= @widget.trip.month_km %> <span class="stat-unit">km</span></div>
@@ -626,8 +603,8 @@
                   <div class="stat-label">Last 12 months</div>
                   <div class="stat-value"><%= @widget.trip.trailing_12mo_km %> <span class="stat-unit">km</span></div>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           <% end %>
         </div>
       </details>
@@ -704,4 +681,5 @@
       end %>
     </div>
   </div>
+
 </div>
