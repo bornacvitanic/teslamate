@@ -186,14 +186,15 @@ export const SimpleMap = {
 
     const map = createMap({
       elId: this.el.dataset.id,
-      zoomControl: !!this.el.dataset.zoom,
+      // Summary map is a fixed preview — no pan, zoom, or controls.
+      zoomControl: false,
       boxZoom: false,
-      doubleClickZoom: true,
+      doubleClickZoom: false,
       keyboard: false,
-      scrollWheelZoom: true,
-      tap: true,
-      dragging: true,
-      touchZoom: true,
+      scrollWheelZoom: false,
+      tap: false,
+      dragging: false,
+      touchZoom: false,
     });
 
     const isArrow = this.el.dataset.marker === "arrow";
@@ -240,23 +241,14 @@ export const SimpleMap = {
     requestAnimationFrame(nudge);
     [100, 300, 700, 1500].forEach((ms) => setTimeout(nudge, ms));
 
-    // Auto-pan follows the car while driving, but pause for 30s after the
-    // user drags or zooms so they can explore without being yanked back.
-    let autoCenterSuspendedUntil = 0;
-    map.on("dragstart zoomstart", () => {
-      autoCenterSuspendedUntil = Date.now() + 30_000;
-    });
-
+    // Map is not interactive on the summary — always follow the car.
     if (isArrow) {
       const setView = () => {
         const [lat, lng, heading] = $position.value.split(",");
         marker.setHeading(heading);
         marker.setLatLng([lat, lng]);
-        if (Date.now() >= autoCenterSuspendedUntil) {
-          map.setView([lat, lng], map.getZoom());
-        }
+        map.setView([lat, lng], map.getZoom());
       };
-
       $position.addEventListener("change", setView);
     }
   },
