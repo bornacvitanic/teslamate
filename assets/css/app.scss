@@ -502,29 +502,26 @@ nav.navbar {
     .icon-slot.is-muted { color: hsl(0, 0%, 80%) !important; }
     .icon-slot .mdi { font-size: 1.75rem; line-height: 1; }
 
-    // Spinner is always visible: muted gray at rest, colored + spinning
-    // when syncing. Overrides Bulma's is-loading animation color.
-    .icon-slot.spinner {
-      .is-loading,
-      .is-loading::after {
-        display: inline-block;
-        width: 1.4rem;
-        height: 1.4rem;
-        border-radius: 999px;
-        border: 2px solid hsl(0, 0%, 82%);
-        border-right-color: transparent;
-        animation: none;
-        box-sizing: border-box;
-      }
-      // Unset Bulma's nested ::after duplicate
-      .is-loading::after { border: none; width: 0; height: 0; }
+    // Spinner is always visible. Idle: muted gray ring, not spinning.
+    // Syncing: bright white ring, spinning. Higher-specificity selectors and
+    // !important override Bulma's is-loading defaults.
+    .icon-slot.spinner .is-loading {
+      display: inline-block !important;
+      width: 1.4rem !important;
+      height: 1.4rem !important;
+      border: 2px solid hsl(0, 0%, 78%) !important;
+      border-right-color: transparent !important;
+      border-radius: 999px !important;
+      box-sizing: border-box !important;
+      animation: none !important;
+      position: relative;
     }
-    .icon-slot.spinner.is-syncing {
-      .is-loading {
-        border-color: hsl(210, 80%, 55%);
-        border-right-color: transparent;
-        animation: spinAround 0.7s linear infinite;
-      }
+    .icon-slot.spinner .is-loading::after { content: none !important; }
+
+    .icon-slot.spinner.is-syncing .is-loading {
+      border-color: hsl(0, 0%, 100%) !important;
+      border-right-color: transparent !important;
+      animation: spinAround 0.7s linear infinite !important;
     }
   }
 

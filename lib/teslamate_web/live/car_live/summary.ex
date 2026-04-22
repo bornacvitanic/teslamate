@@ -62,18 +62,44 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
     socket = assign(socket, assigns)
 
-    # Always kick off a fetch when connected. If coords are nil at this point
-    # (common for offline cars), Weather.forecast returns :error and we'll
-    # retry once a fresh Summary with coords arrives.
+    # Always kick off a fetch when connected. Fall back to the last known
+    # position from the DB when the live Summary has no lat/lng (car offline).
     socket =
       if connected?(socket) do
-        start_weather_fetch(socket, summary.latitude, summary.longitude)
+        {lat, lng} = weather_coords(summary, car.id)
+        start_weather_fetch(socket, lat, lng)
       else
         socket
       end
 
     {:ok, socket}
   end
+
+  defp weather_coords(summary, car_id) do
+    cond do
+      is_number(summary.latitude) and is_number(summary.longitude) ->
+        {summary.latitude, summary.longitude}
+
+      true ->
+        case Repo.one(
+               from p in "positions",
+                 where: p.car_id == ^car_id,
+                 order_by: [desc: p.date],
+                 limit: 1,
+                 select: {p.latitude, p.longitude}
+             ) do
+          {lat, lng} when not is_nil(lat) and not is_nil(lng) ->
+            {decimal_to_float(lat), decimal_to_float(lng)}
+
+          _ ->
+            {nil, nil}
+        end
+    end
+  end
+
+  defp decimal_to_float(%Decimal{} = d), do: Decimal.to_float(d)
+  defp decimal_to_float(n) when is_number(n), do: n * 1.0
+  defp decimal_to_float(_), do: nil
 
   @impl true
   def handle_event("suspend_logging", _val, socket) do
@@ -262,14 +288,12 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   def handle_info(:refresh_weather, socket) do
-    lat = socket.assigns.summary.latitude
-    lng = socket.assigns.summary.longitude
+    {lat, lng} = weather_coords(socket.assigns.summary, socket.assigns.car.id)
 
     socket =
       if is_number(lat) and is_number(lng) do
         start_weather_fetch(socket, lat, lng)
       else
-        # Still no coords — schedule another retry and mark offline.
         Process.send_after(self(), :refresh_weather, @weather_retry_ms)
         assign(socket, weather: :error)
       end
