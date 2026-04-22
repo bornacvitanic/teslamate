@@ -167,7 +167,9 @@ nav.navbar {
     flex-direction: column;
     justify-content: space-between;
     min-height: 340px;
-    margin: 0 -0.4rem 0.5rem;
+    // Pull the section flush with the top/sides of the card, cancelling
+    // .card-content's padding on those three edges.
+    margin: -0.8rem -0.4rem 0.5rem;
   }
   .car-top > .card-map {
     position: absolute;
@@ -194,8 +196,9 @@ nav.navbar {
 
     // Override dark text inside the overlay for readability on map tiles.
     .title.is-5 { color: hsla(0, 0%, 100%, 0.98); }
-    .mini-battery { color: hsla(0, 0%, 100%, 0.95); }
-    .mini-battery.is-offline { color: hsla(0, 0%, 100%, 0.65); }
+    .mini-battery.is-online  { color: hsla(0, 0%, 100%, 0.95); }
+    .mini-battery.is-offline { color: hsla(0, 0%, 100%, 0.6); }
+    .mini-battery.is-charging { color: hsl(141, 60%, 58%); }
     .status-line,
     .status-line .status-text { color: hsla(0, 0%, 100%, 0.85); }
   }
@@ -208,7 +211,7 @@ nav.navbar {
 
   @include mx.tablet {
     .card-content { width: 100%; padding: 1rem 1.5rem; }
-    .car-top { margin-left: -1.5rem; margin-right: -1.5rem; }
+    .car-top { margin: -1rem -1.5rem 0.75rem; }
   }
 
   button[phx-click="suspend_logging"]:disabled {
@@ -1380,13 +1383,6 @@ main.section {
       .icon { color: #fff; }
     }
 
-    .charging-panel {
-      border-radius: 12px;
-      background: hsla(210, 80%, 55%, 0.08);
-      border-color: hsla(210, 80%, 55%, 0.28);
-      .charging-header { color: hsl(210, 80%, 35%); }
-    }
-
     .weather-strip .weather-day {
       border-radius: 10px;
       background: hsla(0, 0%, 0%, 0.03);
@@ -1443,10 +1439,5 @@ main.section {
     }
     .tire-panel .tire { background: hsla(0, 0%, 100%, 0.04); }
     .weather-strip .weather-day { background: hsla(0, 0%, 100%, 0.04); }
-    .charging-panel {
-      background: hsla(210, 80%, 55%, 0.14);
-      border-color: hsla(210, 80%, 55%, 0.35);
-      .charging-header { color: hsl(210, 80%, 75%); }
-    }
   }
 }
