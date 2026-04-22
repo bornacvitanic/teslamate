@@ -104,17 +104,15 @@ defmodule TeslaMateWeb.CarLive.Summary do
   defp decimal_to_float(_), do: nil
 
   # When the car is offline the live Summary has nil tpms_pressure_* fields.
-  # Fall back to the latest positions row so the tire widget keeps showing
-  # the last known pressures.
+  # Fall back to the latest positions row (covered by the car_id+date index).
+  # We pick the most recent row — any tpms nils in it we just leave as nil,
+  # rather than filtering — filtering would scan a huge chunk of positions.
   defp fill_last_known_tpms(%Summary{} = s, car_id) do
     if is_nil(s.tpms_pressure_fl) or is_nil(s.tpms_pressure_fr) or
          is_nil(s.tpms_pressure_rl) or is_nil(s.tpms_pressure_rr) do
       case Repo.one(
              from p in "positions",
-               where:
-                 p.car_id == ^car_id and
-                   not is_nil(p.tpms_pressure_fl) and not is_nil(p.tpms_pressure_fr) and
-                   not is_nil(p.tpms_pressure_rl) and not is_nil(p.tpms_pressure_rr),
+               where: p.car_id == ^car_id,
                order_by: [desc: p.date],
                limit: 1,
                select: %{
