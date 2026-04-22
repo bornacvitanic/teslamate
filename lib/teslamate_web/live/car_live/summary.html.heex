@@ -1,6 +1,7 @@
 <div class="car card">
 
   <div class="card-content">
+    <div class="car-top">
     <div class="media is-flex car-head">
       <div class="media-content">
         <p class="title is-5"><%= @summary.display_name %></p>
@@ -34,6 +35,15 @@
           <span class="status-text"><%= @translate_state.(@summary.state) %><%= if @duration do %> for <%= format_duration(@duration) %><% end %></span>
           <span class={"status-extra has-tooltip-top #{if is_map(@climate_extra) and @climate_extra.battery_heater == true, do: "is-on", else: "is-off"}"} data-tooltip="Battery heater on">
             <span class="mdi mdi-heat-wave"></span>
+          </span>
+          <span class="warn-strip warn-strip-inline">
+            <span class={"warn-pill is-info has-tooltip-top #{if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
+            <span class={"warn-pill has-tooltip-top #{if @summary.state != :driving and @summary.is_user_present, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
+            <span class={"warn-pill has-tooltip-top #{if @summary.windows_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
+            <span class={"warn-pill has-tooltip-top #{if @summary.doors_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
+            <span class={"warn-pill is-info has-tooltip-top #{if @summary.update_available, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version || "—")}><span class="mdi mdi-gift-outline"></span></span>
+            <span class={"warn-pill is-danger has-tooltip-top #{if not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr), do: "is-on", else: "is-off"}"} data-tooltip="Low tire pressure"><span class="mdi mdi-car-tire-alert"></span></span>
+            <span class={"warn-pill is-danger has-tooltip-top #{if @summary.healthy == false, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
           </span>
         </div>
       </div>
@@ -151,16 +161,8 @@
         <span class="icon-slot is-empty"></span>
       <% end %>
     </div>
+    </div>
 
-    <div class="warn-strip">
-        <span class={"warn-pill is-info has-tooltip-top #{if not is_nil(@summary.battery_level) and not is_nil(@summary.usable_battery_level) and @summary.battery_level - @summary.usable_battery_level > 2, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Reduced Battery Range")}><span class="mdi mdi-snowflake"></span></span>
-        <span class={"warn-pill has-tooltip-top #{if @summary.state != :driving and @summary.is_user_present, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Driver present")}><span class="mdi mdi-account"></span></span>
-        <span class={"warn-pill has-tooltip-top #{if @summary.windows_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Windows open")}><span class="mdi mdi-window-open"></span></span>
-        <span class={"warn-pill has-tooltip-top #{if @summary.doors_open, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Doors open")}><span class="mdi mdi-car-door"></span></span>
-        <span class={"warn-pill is-info has-tooltip-top #{if @summary.update_available, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Software Update available (%{version})", version: @summary.update_version || "—")}><span class="mdi mdi-gift-outline"></span></span>
-        <span class={"warn-pill is-danger has-tooltip-top #{if not is_nil(@summary.tpms_soft_warning_fl) and (@summary.tpms_soft_warning_fl or @summary.tpms_soft_warning_fr or @summary.tpms_soft_warning_rl or @summary.tpms_soft_warning_rr), do: "is-on", else: "is-off"}"} data-tooltip="Low tire pressure"><span class="mdi mdi-car-tire-alert"></span></span>
-        <span class={"warn-pill is-danger has-tooltip-top #{if @summary.healthy == false, do: "is-on", else: "is-off"}"} data-tooltip={gettext("Health check failed")}><span class="mdi mdi-alert-box"></span></span>
-      </div>
     <div class={"driving-panel #{unless @summary.state == :driving and not is_nil(@summary.speed), do: "is-conditional-hidden"}"}>
         <span class="icon"><i class="mdi mdi-speedometer"></i></span>
         <span class="drv-speed"><%= @summary.speed %></span>
@@ -168,35 +170,35 @@
     </div>
 
     <div class={"charging-panel #{unless @summary.state == :charging, do: "is-conditional-hidden"}"}>
-        <div class="charging-row charging-row-main">
-          <span class="charging-lhs">
-            <%= if not is_nil(@summary.charge_limit_soc) do %>
-              Charge limit <%= @summary.charge_limit_soc %>%
-            <% else %>
-              Charging
-            <% end %>
-          </span>
-          <span class="charging-rhs">
-            <%= if not is_nil(@summary.charger_power) do %><%= @summary.charger_power %>kW<% end %>
-            <%= if not is_nil(@summary.charge_energy_added) do %> · +<%= @summary.charge_energy_added %>kWh<% end %>
-            <%= cp = is_map(@widget) && @widget[:charging_power] %>
-            <%= if cp && cp.current && cp.pilot do %> · <%= cp.current %>/<%= cp.pilot %>A<% end %>
-            <%= if cp && cp.voltage do %> · <%= cp.voltage %>V<% end %>
-          </span>
-        </div>
+      <% cp = (is_map(@widget) && @widget[:charging_power]) || nil %>
+      <div class="charging-row charging-row-main">
+        <span class="charging-lhs">
+          <%= if not is_nil(@summary.charge_limit_soc) do %>
+            Charge limit <strong><%= @summary.charge_limit_soc %>%</strong>
+          <% else %>
+            Charging
+          <% end %>
+        </span>
+        <span class="charging-rhs">
+          <%= if not is_nil(@summary.charger_power) do %><span class="ch-pill"><%= @summary.charger_power %> kW</span><% end %>
+          <%= if not is_nil(@summary.charge_energy_added) do %><span class="ch-pill">+<%= @summary.charge_energy_added %> kWh</span><% end %>
+          <%= if cp && not is_nil(cp.current) and not is_nil(cp.pilot) do %><span class="ch-pill"><%= cp.current %>/<%= cp.pilot %> A</span><% end %>
+          <%= if cp && not is_nil(cp.voltage) do %><span class="ch-pill"><%= cp.voltage %> V</span><% end %>
+        </span>
+      </div>
 
-        <%= if not is_nil(@summary.time_to_full_charge) do %>
-          <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
-          <% finish_dt =
-            DateTime.utc_now()
-            |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
-            |> DateTime.shift_zone!(@tz) %>
-          <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
-          <div class="charging-row charging-row-eta">
-            <span class="charging-lhs">Remaining <%= remaining_str %></span>
-            <span class="charging-rhs">ETA <%= eta_str %></span>
-          </div>
-        <% end %>
+      <%= if not is_nil(@summary.time_to_full_charge) do %>
+        <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
+        <% finish_dt =
+          DateTime.utc_now()
+          |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
+          |> DateTime.shift_zone!(@tz) %>
+        <% eta_str = Calendar.strftime(finish_dt, "%H:%M") %>
+        <div class="charging-row charging-row-eta">
+          <span class="charging-lhs">Remaining <%= remaining_str %></span>
+          <span class="charging-rhs">ETA <%= eta_str %></span>
+        </div>
+      <% end %>
 
         <%= if @summary.plugged_in and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
           <div class="charging-row charging-row-scheduled">

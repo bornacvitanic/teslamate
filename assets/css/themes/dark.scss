@@ -187,9 +187,16 @@
     }
 
     .charging-panel {
-      background: rgba(204, 204, 220, 0.06);
-      .charging-row { color: rgba(204, 204, 220, 0.85); }
-      .charging-row-main .charging-rhs { color: rgba(204, 204, 220, 0.6); }
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(204, 204, 220, 0.85);
+      .charging-row + .charging-row { border-top-color: rgba(204, 204, 220, 0.08); }
+      .charging-lhs { color: rgba(204, 204, 220, 0.85); }
+      .charging-lhs strong { color: rgba(204, 204, 220, 0.98); }
+      .ch-pill {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(204, 204, 220, 0.15);
+        color: rgba(204, 204, 220, 0.9);
+      }
       .charging-row-eta,
       .charging-row-scheduled { color: rgba(204, 204, 220, 0.55); }
     }
