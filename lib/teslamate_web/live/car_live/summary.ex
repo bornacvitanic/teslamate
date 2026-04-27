@@ -392,7 +392,7 @@ defmodule TeslaMateWeb.CarLive.Summary do
   @ice_l_per_100km 7.5
 
   defp fetch_widget_data(car_id, tz) do
-    {today_start_utc, now} = today_window(tz)
+    {today_start_utc, _now} = today_window(tz)
     month_start_utc = month_start_utc(tz)
 
     today_raw =
@@ -470,6 +470,14 @@ defmodule TeslaMateWeb.CarLive.Summary do
           select: coalesce(sum(d.distance), 0.0)
       )
 
+    # Lifetime km (for annual extrapolation)
+    lifetime_km =
+      Repo.one(
+        from d in Drive,
+          where: d.car_id == ^car_id,
+          select: coalesce(sum(d.distance), 0.0)
+      )
+
     # Lifetime ICE-equivalent cost using actual fuel prices per drive
     ice_cost_lifetime =
       Repo.one(
@@ -493,6 +501,18 @@ defmodule TeslaMateWeb.CarLive.Summary do
       Repo.one(from m in "manual_payments", select: coalesce(sum(m.amount_paid), 0))
 
     savings = to_float(ice_cost_lifetime) - to_float(ev_cost_lifetime) - to_float(manual_cost)
+
+    # Monthly equivalents
+    ice_cost_month =
+      Repo.one(
+        from d in Drive,
+          join: dfp in "drive_fuel_price",
+          on: dfp.drive_id == d.id and dfp.fuel_type == "eurosuper_95",
+          where: d.car_id == ^car_id and d.start_date >= ^month_start_utc,
+          select: coalesce(sum(d.distance * ^(@ice_l_per_100km / 100.0) * dfp.fuel_price_eur_l), 0)
+      )
+
+    savings_month = to_float(ice_cost_month) - to_float(month_charge.cost)
 
     month_cost_eur = to_float(month_charge.cost)
     month_km_f = to_float(month_km)
@@ -519,8 +539,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
     %{
       today: today,
       last_drive: last_drive,
-      days_since_drive: days_since(last_drive_at, now),
-      days_since_charge: days_since(last_charge_at, now),
+      days_since_drive: days_since(last_drive_at, tz),
+      days_since_charge: days_since(last_charge_at, tz),
       last_drive_at: last_drive_at,
       last_charge_at: last_charge_at,
       cost: %{
@@ -530,6 +550,7 @@ defmodule TeslaMateWeb.CarLive.Summary do
         month_km: month_km_f,
         cost_per_km: cost_per_km_month,
         savings_lifetime: savings,
+        savings_month: savings_month,
         month_eur_per_kwh:
           if to_float(month_charge.kwh) > 0.0 do
             month_cost_eur / to_float(month_charge.kwh)
@@ -540,7 +561,15 @@ defmodule TeslaMateWeb.CarLive.Summary do
       trip: %{
         month_km: round(month_km_f),
         ytd_km: round(to_float(ytd_km)),
-        trailing_12mo_km: round(to_float(trailing_12mo_km))
+        trailing_12mo_km: round(to_float(trailing_12mo_km)),
+        annual_extrapolated_km:
+          # If we have less than 365 days of data, project to a full year.
+          # km used to compute the rate is the lifetime distance.
+          if is_integer(car_age_days) and car_age_days >= 7 and car_age_days < 365 do
+            round(to_float(lifetime_km) * 365.0 / car_age_days)
+          else
+            nil
+          end
       },
       tire: tire_info,
       battery_health: battery_health,
@@ -807,10 +836,15 @@ defmodule TeslaMateWeb.CarLive.Summary do
 
   defp tz_valid?(_), do: false
 
-  defp days_since(nil, _now), do: nil
+  defp days_since(nil, _tz), do: nil
 
-  defp days_since(%DateTime{} = ts, now) do
-    div(DateTime.diff(now, ts, :second), 86_400)
+  # Calendar-day diff in the user's tz: a drive at 23:00 yesterday and the
+  # current time 09:00 today is "1 day ago", not "0".
+  defp days_since(%DateTime{} = ts, tz) do
+    tz = if tz_valid?(tz), do: tz, else: @fallback_tz
+    today = DateTime.now!(tz) |> DateTime.to_date()
+    ts_date = ts |> DateTime.shift_zone!(tz) |> DateTime.to_date()
+    Date.diff(today, ts_date)
   end
 
   def drive_endpoint_name(drive) do

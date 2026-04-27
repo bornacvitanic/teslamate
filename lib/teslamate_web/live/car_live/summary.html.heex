@@ -413,16 +413,30 @@
           <span class="menu-chevron icon"><i class="mdi mdi-chevron-right"></i></span>
         </summary>
         <div class="menu-body">
-          <%= if @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
-            <div class="sched-banner">
-              <span class="icon"><i class="mdi mdi-clock-outline"></i></span>
-              <span>Scheduled to start at
-                <%= tag(:span,
-                  data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
-                  phx_hook: "LocalTime",
-                  id: "sched_start_body_#{@car.id}"
-                ) %></span>
-            </div>
+          <%= cond do %>
+            <% @summary.state == :charging and not is_nil(@summary.time_to_full_charge) -> %>
+              <% banner_finish_dt =
+                DateTime.utc_now()
+                |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
+                |> DateTime.shift_zone!(@tz) %>
+              <% banner_eta = Calendar.strftime(banner_finish_dt, "%H:%M") %>
+              <div class="sched-banner">
+                <span class="icon"><i class="mdi mdi-lightning-bolt"></i></span>
+                <span>
+                  <%= if not is_nil(@summary.charge_limit_soc) do %>Will reach <%= @summary.charge_limit_soc %>% by <%= banner_eta %><% else %>Charging until <%= banner_eta %><% end %>
+                </span>
+              </div>
+            <% @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] -> %>
+              <div class="sched-banner">
+                <span class="icon"><i class="mdi mdi-clock-outline"></i></span>
+                <span>Scheduled to start at
+                  <%= tag(:span,
+                    data: [date: @summary.scheduled_charging_start_time |> DateTime.to_iso8601()],
+                    phx_hook: "LocalTime",
+                    id: "sched_start_body_#{@car.id}"
+                  ) %></span>
+              </div>
+            <% true -> %>
           <% end %>
           <%= if not is_nil(@summary.battery_level) do %>
             <% lvl = @summary.usable_battery_level || @summary.battery_level %>
@@ -474,6 +488,9 @@
                 <div class="stat-sub">
                   <%= :erlang.float_to_binary(@widget.cost.month_kwh * 1.0, decimals: 1) %> kWh · <%= @widget.cost.month_sessions %> session<%= if @widget.cost.month_sessions == 1, do: "", else: "s" %>
                 </div>
+                <%= if @widget.cost[:savings_month] && @widget.cost.savings_month > 0 do %>
+                  <div class="stat-sub-saving">Saved €<%= format_eur(@widget.cost.savings_month) %> vs ICE</div>
+                <% end %>
               </div>
               <%= if @widget.cost.cost_per_km do %>
                 <div class="stat-card">
@@ -600,6 +617,13 @@
                   <div class="stat-label">Last 12 months</div>
                   <div class="stat-value"><%= @widget.trip.trailing_12mo_km %> <span class="stat-unit">km</span></div>
                 </div>
+                <%= if @widget.trip[:annual_extrapolated_km] do %>
+                  <div class="stat-card">
+                    <div class="stat-label">Annual (est.)</div>
+                    <div class="stat-value"><%= @widget.trip.annual_extrapolated_km %> <span class="stat-unit">km</span></div>
+                    <div class="stat-sub">extrapolated</div>
+                  </div>
+                <% end %>
               <% end %>
             </div>
           <% end %>

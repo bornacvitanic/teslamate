@@ -421,6 +421,12 @@ nav.navbar {
       color: hsl(0, 0%, 50%);
       margin-top: 0.1rem;
     }
+    .stat-sub-saving {
+      font-size: 0.75rem;
+      color: hsl(141, 53%, 35%);
+      font-weight: 600;
+      margin-top: 0.15rem;
+    }
     &.is-good,
     &.is-savings {
       background: hsla(141, 53%, 53%, 0.08);
