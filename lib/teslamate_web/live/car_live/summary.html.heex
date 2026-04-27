@@ -185,7 +185,7 @@
         <%= if cp && not is_nil(cp.voltage) do %><span><%= cp.voltage %> V</span><% end %>
       </div>
 
-      <%= if not is_nil(@summary.time_to_full_charge) do %>
+      <%= if is_number(@summary.time_to_full_charge) do %>
         <% remaining_str = round(@summary.time_to_full_charge * 60 * 60) |> Convert.sec_to_str() |> Enum.reject(&String.ends_with?(&1, "s")) |> Enum.join(", ") %>
         <% finish_dt =
           DateTime.utc_now()
@@ -414,7 +414,7 @@
         </summary>
         <div class="menu-body">
           <%= cond do %>
-            <% @summary.state == :charging and not is_nil(@summary.time_to_full_charge) -> %>
+            <% @summary.state == :charging and is_number(@summary.time_to_full_charge) -> %>
               <% banner_finish_dt =
                 DateTime.utc_now()
                 |> DateTime.add(round(@summary.time_to_full_charge * 3600), :second)
