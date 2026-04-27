@@ -195,7 +195,7 @@
         <div class="charging-meta">Remaining <%= remaining_str %> · ETA <%= eta_str %></div>
       <% end %>
 
-        <%= if @summary.plugged_in and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
+        <%= if @summary.plugged_in == true and @summary.scheduled_charging_start_time not in [nil, :unknown] do %>
           <div class="charging-row charging-row-scheduled">
             <span>Scheduled:
               <%= tag(:span,
