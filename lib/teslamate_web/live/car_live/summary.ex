@@ -270,6 +270,8 @@ defmodule TeslaMateWeb.CarLive.Summary do
     "#{Float.round(bar, 1)} Bar"
   end
 
+  def format_tpms(_, _), do: "—"
+
   def format_temp(nil, _unit), do: "—"
 
   def format_temp(%Decimal{} = c, unit), do: format_temp(Decimal.to_float(c), unit)
