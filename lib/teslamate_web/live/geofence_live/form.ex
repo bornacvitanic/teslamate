@@ -132,6 +132,7 @@ defmodule TeslaMateWeb.GeoFenceLive.Form do
         :cost_per_unit_night,
         :night_start_utc,
         :night_end_utc,
+        :night_timezone,
         :session_fee,
         :billing_type,
         :latitude,

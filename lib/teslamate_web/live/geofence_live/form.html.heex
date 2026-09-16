@@ -1,9 +1,9 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
     <li><.link navigate={~p"/"}><%= gettext("Home") %></.link></li>
-    
+
     <li><.link navigate={~p"/geo-fences"}><%= gettext("Geo-Fences") %></.link></li>
-    
+
     <li class="is-active">
       <a href="#">
         <%= case @action do
@@ -20,19 +20,19 @@
     <div class="field-label is-normal">
       <%= label(f, :position, gettext("Position"), class: "label") %>
     </div>
-    
+
     <div class="field-body">
       <div class="field">
         <div class="control">
           <div id="map_container" phx-update="ignore">
             <figure id="map" style="height: 400px; position: relative;" phx-hook="Map"></figure>
           </div>
-           <%= hidden_input(f, :latitude) %> <%= hidden_input(f, :longitude) %> <%= hidden_input(
+          <%= hidden_input(f, :latitude) %> <%= hidden_input(f, :longitude) %> <%= hidden_input(
             f,
             :radius
           ) %>
         </div>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger">
             <%= error_tag(f, :address_id) %> <%= error_tag(f, :latitude) %> <%= error_tag(
@@ -44,34 +44,34 @@
       </div>
     </div>
   </div>
-  
+
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <%= label class: "label" do
         gettext("Name")
       end %>
     </div>
-    
+
     <div class="field-body">
       <div class="field is-expanded">
         <div class="control">
           <%= text_input(f, :name, class: "input", placeholder: gettext("Name")) %>
         </div>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger"><%= error_tag(f, :name) %></p>
         <% end %>
       </div>
     </div>
   </div>
-  
+
   <div class="field is-horizontal mt-4">
     <div class="field-label is-normal">
       <%= label class: "label" do
         gettext("Cost")
       end %>
     </div>
-    
+
     <div class="field-body">
       <div class="field has-addons">
         <p class="control">
@@ -82,7 +82,7 @@
             ]) %>
           </span>
         </p>
-        
+
         <p class="control is-expanded">
           <%= text_input(f, :cost_per_unit,
             class: "input",
@@ -92,21 +92,21 @@
             placeholder: "0.00"
           ) %>
         </p>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger"><%= error_tag(f, :cost_per_unit) %></p>
         <% end %>
       </div>
     </div>
   </div>
-  
+
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <%= label class: "label" do
         gettext("Night rate")
       end %>
     </div>
-    
+
     <div class="field-body">
       <div class="field">
         <div class="control">
@@ -118,27 +118,27 @@
             placeholder: gettext("optional")
           ) %>
         </div>
-        
+
         <p class="help">
           <%= gettext(
             "Leave empty to bill one flat rate. When set, energy charged inside the night window is billed at this rate and the rest at the rate above."
           ) %>
         </p>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger"><%= error_tag(f, :cost_per_unit_night) %></p>
         <% end %>
       </div>
     </div>
   </div>
-  
+
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <%= label class: "label" do
-        gettext("Night window (UTC)")
+        gettext("Night window")
       end %>
     </div>
-    
+
     <div class="field-body">
       <div class="field">
         <div class="field has-addons">
@@ -151,11 +151,11 @@
               step: 1
             ) %>
           </p>
-          
+
           <p class="control">
             <a class="button is-static"><%= gettext("to") %></a>
           </p>
-          
+
           <p class="control">
             <%= text_input(f, :night_end_utc,
               class: "input",
@@ -166,29 +166,56 @@
             ) %>
           </p>
         </div>
-        
+
         <p class="help">
-          <%= gettext(
-            "Whole hours, in UTC. Tariff windows that are stated in local time shift with daylight saving, so UTC keeps the split correct all year."
-          ) %>
+          <%= gettext("Whole hours. Read as UTC unless a time zone is set below.") %>
         </p>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger"><%= error_tag(f, :night_start_utc) %></p>
-          
+
           <p class="help is-danger"><%= error_tag(f, :night_end_utc) %></p>
         <% end %>
       </div>
     </div>
   </div>
-  
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <%= label class: "label" do
+        gettext("Window time zone")
+      end %>
+    </div>
+
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <%= text_input(f, :night_timezone,
+            class: "input",
+            placeholder: gettext("optional, e.g. Europe/Zagreb")
+          ) %>
+        </div>
+
+        <p class="help">
+          <%= gettext(
+            "Leave empty when the tariff states different local hours per season, so the window is the same in UTC all year. Set a time zone when the window is fixed on the local clock and should follow daylight saving."
+          ) %>
+        </p>
+
+        <%= if @show_errors do %>
+          <p class="help is-danger"><%= error_tag(f, :night_timezone) %></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <%= label class: "label" do
         gettext("Session fee")
       end %>
     </div>
-    
+
     <div class="field-body">
       <div class="field">
         <div class="control">
@@ -201,17 +228,17 @@
             placeholder: "0.00"
           ) %>
         </div>
-        
+
         <%= if @show_errors do %>
           <p class="help is-danger"><%= error_tag(f, :session_fee) %></p>
         <% end %>
       </div>
     </div>
   </div>
-  
+
   <div class="field is-horizontal mt-5">
     <div class="field-label"></div>
-    
+
     <div class="field-body">
       <div class="field is-grouped">
         <div class="control">
@@ -219,7 +246,7 @@
             <%= gettext("Back") %>
           </.link>
         </div>
-        
+
         <div class="control">
           <%= submit(gettext("Save"),
             phx_disable_with: gettext("Saving..."),
@@ -246,16 +273,16 @@
     {if @show_modal, do: [phx_window_keyup: "keyup"], else: []}
   >
   </div>
-  
+
   <div class="modal-card modal-content">
     <header class="modal-card-head">
       <p class="modal-card-title"><%= gettext("Charging Costs") %></p>
-      
+
       <button class="button is-text is-rounded" aria-label="close" phx-click="close-modal">
         <span class="icon is-small"><i class="mdi mdi-close"></i></span>
       </button>
     </header>
-    
+
     <section class="modal-card-body">
       <p>
         <%= raw(
@@ -268,12 +295,12 @@
         ) %>
       </p>
     </section>
-    
+
     <footer class="modal-card-foot">
       <button class="button" phx-click="calc-costs" phx-value-result="no">
         <%= gettext("Continue") %>
       </button>
-      
+
       <button class="button is-info" phx-click="calc-costs" phx-value-result="yes">
         <%= gettext("Add costs retroactively") %>
       </button>

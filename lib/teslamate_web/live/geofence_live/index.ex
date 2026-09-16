@@ -186,6 +186,7 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
           cost_per_unit_night: g.cost_per_unit_night && Decimal.to_float(g.cost_per_unit_night),
           night_start_utc: g.night_start_utc,
           night_end_utc: g.night_end_utc,
+          night_timezone: g.night_timezone,
           session_fee: g.session_fee && Decimal.to_float(g.session_fee)
         }
       end)
@@ -256,6 +257,7 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
       "cost_per_unit_night" => attrs["cost_per_unit_night"],
       "night_start_utc" => attrs["night_start_utc"],
       "night_end_utc" => attrs["night_end_utc"],
+      "night_timezone" => attrs["night_timezone"],
       "session_fee" => attrs["session_fee"]
     }
 

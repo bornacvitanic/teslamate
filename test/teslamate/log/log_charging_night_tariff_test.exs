@@ -230,4 +230,94 @@ defmodule TeslaMate.LogChargingNightTariffTest do
       assert geofence.cost_per_unit_night == nil
     end
   end
+
+  # Five samples 30 minutes apart covering 21:00 -> 23:00 *local* Zagreb time.
+  # In January (CET, UTC+1) that is 20:00 UTC; in July (CEST, UTC+2) it is 19:00 UTC.
+  # Stored in UTC the two sit an hour apart, so a UTC window splits them differently
+  # while a window pinned to local time must not.
+  defp charges_at_local_2100(date, utc_start_hour) do
+    for {offset, added} <- [{0, 0.0}, {30, 4.5}, {60, 9.0}, {90, 13.5}, {120, 18.0}] do
+      hh = utc_start_hour + div(offset, 60)
+      mm = rem(offset, 60)
+      pad = fn n -> n |> Integer.to_string() |> String.pad_leading(2, "0") end
+      {"#{date} #{pad.(hh)}:#{pad.(mm)}:00.000", added, 10, 250, nil, 0, 1, "<invalid>"}
+    end
+  end
+
+  describe "night window time zone" do
+    test "a local window splits winter and summer sessions identically" do
+      for {label, date, utc_hour} <- [{"winter", "2024-01-15", 20}, {"summer", "2024-07-15", 19}] do
+        car = car_fixture()
+
+        assert %GeoFence{} =
+                 geofence =
+                 geofence_fixture(%{
+                   name: "home #{label}",
+                   billing_type: :per_kwh,
+                   cost_per_unit: 0.20,
+                   cost_per_unit_night: 0.10,
+                   night_start_utc: 20,
+                   night_end_utc: 6,
+                   night_timezone: "Europe/Zagreb"
+                 })
+
+        assert {:ok, cproc} = log_charging_process(charges_at_local_2100(date, utc_hour), car)
+
+        # 20 kWh, entirely inside 20:00-06:00 local in both seasons
+        assert Decimal.eq?(cproc.charge_energy_used, Decimal.new("20.0"))
+        assert Decimal.eq?(cproc.cost, Decimal.new("2.00")), "#{label} session mispriced"
+
+        # drop it so the next iteration's geofence is the only one at this position
+        {:ok, _} = Locations.delete_geofence(geofence)
+      end
+    end
+
+    test "the same summer session splits differently on a UTC window" do
+      car = car_fixture()
+
+      assert %GeoFence{} =
+               geofence_fixture(%{
+                 billing_type: :per_kwh,
+                 cost_per_unit: 0.20,
+                 cost_per_unit_night: 0.10,
+                 night_start_utc: 20,
+                 night_end_utc: 6
+               })
+
+      assert {:ok, cproc} = log_charging_process(charges_at_local_2100("2024-07-15", 19), car)
+
+      # 19:30 UTC falls outside the window, so 5 of the 20 kWh bill at the day rate
+      assert Decimal.eq?(cproc.cost, Decimal.new("2.50"))
+    end
+
+    test "rejects an unknown time zone" do
+      assert {:error, changeset} =
+               Locations.create_geofence(%{
+                 name: "home",
+                 latitude: 50.1,
+                 longitude: 11.5,
+                 radius: 50,
+                 cost_per_unit: 0.20,
+                 cost_per_unit_night: 0.10,
+                 night_timezone: "Europe/Nowhere"
+               })
+
+      assert %{night_timezone: ["is not a known time zone"]} = errors_on(changeset)
+    end
+
+    test "treats a blank time zone as unset" do
+      assert {:ok, %GeoFence{} = geofence} =
+               Locations.create_geofence(%{
+                 name: "home",
+                 latitude: 50.1,
+                 longitude: 11.5,
+                 radius: 50,
+                 cost_per_unit: 0.20,
+                 cost_per_unit_night: 0.10,
+                 night_timezone: ""
+               })
+
+      assert geofence.night_timezone == nil
+    end
+  end
 end

@@ -251,6 +251,7 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
                field_cost_per_unit,
                _field_cost_per_unit_night,
                _field_night_window,
+               _field_night_timezone,
                field_session_fee,
                _
              ] = Floki.find(html, ".field.is-horizontal")
@@ -302,6 +303,7 @@ defmodule TeslaMateWeb.GeoFenceLiveTest do
                field_cost_per_unit,
                _field_cost_per_unit_night,
                _field_night_window,
+               _field_night_timezone,
                field_session_fee,
                _
              ] = Floki.find(html, ".field.is-horizontal")

@@ -232,8 +232,10 @@ defmodule TeslaMate.Locations do
     # `night_share` splits a session's energy across the geofence's night window.
     # It is weighted by the per-row charge_energy_added deltas so that tapering
     # charging power is accounted for, falling back to the share of samples when the
-    # deltas carry no energy. The window is compared in UTC (matching charges.date);
-    # the MOD arithmetic handles windows that wrap past midnight.
+    # deltas carry no energy. The window is compared in UTC (matching charges.date)
+    # unless the geofence sets night_timezone, in which case rows are converted to
+    # that zone first so the window tracks local wall-clock time across DST. The MOD
+    # arithmetic handles windows that wrap past midnight.
     query = """
     UPDATE charging_processes cp
     SET cost = sub.cost
@@ -272,7 +274,9 @@ defmodule TeslaMate.Locations do
           SELECT
             GREATEST(ch.charge_energy_added
                      - LAG(ch.charge_energy_added) OVER (ORDER BY ch.date), 0) AS de,
-            MOD(EXTRACT(hour FROM ch.date)::int - g.night_start_utc + 24, 24)
+            MOD(EXTRACT(hour FROM COALESCE(
+                  (ch.date AT TIME ZONE 'UTC') AT TIME ZONE g.night_timezone,
+                  ch.date))::int - g.night_start_utc + 24, 24)
               < MOD(g.night_end_utc - g.night_start_utc + 24, 24) AS is_night
           FROM charges ch
           WHERE ch.charging_process_id = c.id

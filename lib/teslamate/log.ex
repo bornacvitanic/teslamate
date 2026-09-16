@@ -522,10 +522,17 @@ defmodule TeslaMate.Log do
   # integrated (e.g. sessions with no phase/voltage data), and to 0 (all day, the more
   # expensive tariff) when the session has no usable rows at all.
   #
-  # The window is compared in UTC, matching `charges.date`. The MOD arithmetic handles
-  # windows that wrap past midnight (the usual case, e.g. 20:00-06:00) as well as ones
-  # that do not.
-  defp night_share(%ChargingProcess{id: id} = charging_process, night_start, night_end) do
+  # With no `night_timezone` the window is compared in UTC, matching `charges.date`.
+  # With one, each row is converted to that zone first so the window follows local
+  # wall-clock time across daylight-saving changes. The MOD arithmetic handles windows
+  # that wrap past midnight (the usual case, e.g. 20:00-06:00) as well as ones that do
+  # not.
+  defp night_share(
+         %ChargingProcess{id: id} = charging_process,
+         night_start,
+         night_end,
+         night_timezone
+       ) do
     phases = determine_phases(charging_process)
 
     per_row =
@@ -533,7 +540,9 @@ defmodule TeslaMate.Log do
         select: %{
           is_night:
             fragment(
-              "MOD(EXTRACT(hour FROM ?)::int - ? + 24, 24) < MOD(? - ? + 24, 24)",
+              "MOD(EXTRACT(hour FROM COALESCE((? AT TIME ZONE 'UTC') AT TIME ZONE ?, ?))::int - ? + 24, 24) < MOD(? - ? + 24, 24)",
+              c.date,
+              type(^night_timezone, :string),
               c.date,
               type(^night_start, :integer),
               type(^night_end, :integer),
@@ -663,6 +672,7 @@ defmodule TeslaMate.Log do
              cost_per_unit_night: night_rate,
              night_start_utc: night_start,
              night_end_utc: night_end,
+             night_timezone: night_timezone,
              session_fee: session_fee
            }
          }}
@@ -675,7 +685,7 @@ defmodule TeslaMate.Log do
 
             night_kwh =
               charging_process
-              |> night_share(night_start, night_end)
+              |> night_share(night_start, night_end, night_timezone)
               |> Decimal.mult(total)
 
             cost =

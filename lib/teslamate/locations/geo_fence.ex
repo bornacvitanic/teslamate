@@ -20,6 +20,12 @@ defmodule TeslaMate.Locations.GeoFence do
     field :night_start_utc, :integer, read_after_writes: true
     field :night_end_utc, :integer, read_after_writes: true
 
+    # nil => the window hours are UTC (right for tariffs whose local window shifts
+    # with DST, such as HEP's 21-07 winter / 22-08 summer). Set to an IANA zone to
+    # pin the window to local wall-clock time instead (e.g. a Supercharger's
+    # 16:00-20:00 peak), which then follows DST.
+    field :night_timezone, :string
+
     timestamps()
   end
 
@@ -36,7 +42,8 @@ defmodule TeslaMate.Locations.GeoFence do
       :billing_type,
       :cost_per_unit_night,
       :night_start_utc,
-      :night_end_utc
+      :night_end_utc,
+      :night_timezone
     ])
     |> validate_required([:name, :latitude, :longitude, :radius])
     |> validate_number(:radius, greater_than: 0, less_than: 5000)
@@ -44,7 +51,25 @@ defmodule TeslaMate.Locations.GeoFence do
     |> validate_number(:night_start_utc, greater_than_or_equal_to: 0, less_than_or_equal_to: 23)
     |> validate_number(:night_end_utc, greater_than_or_equal_to: 0, less_than_or_equal_to: 23)
     |> validate_night_tariff()
+    |> validate_night_timezone()
     |> update_change(:name, &String.trim/1)
+  end
+
+  defp validate_night_timezone(changeset) do
+    case get_field(changeset, :night_timezone) do
+      nil ->
+        changeset
+
+      "" ->
+        put_change(changeset, :night_timezone, nil)
+
+      timezone ->
+        if Tzdata.zone_exists?(timezone) do
+          changeset
+        else
+          add_error(changeset, :night_timezone, "is not a known time zone")
+        end
+    end
   end
 
   # A night rate only makes sense for per-kWh billing with a day rate to contrast it
