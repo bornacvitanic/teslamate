@@ -229,24 +229,58 @@ defmodule TeslaMate.Locations do
   end
 
   def calculate_charge_costs(%GeoFence{id: id}) do
+    # `night_share` splits a session's energy across the geofence's night window.
+    # It is weighted by the per-row charge_energy_added deltas so that tapering
+    # charging power is accounted for, falling back to the share of samples when the
+    # deltas carry no energy. The window is compared in UTC (matching charges.date);
+    # the MOD arithmetic handles windows that wrap past midnight.
     query = """
     UPDATE charging_processes cp
-    SET cost = (
+    SET cost = sub.cost
+    FROM (
       SELECT
+        c.id,
         CASE WHEN g.session_fee IS NULL AND g.cost_per_unit IS NULL THEN
                NULL
+             WHEN g.billing_type = 'per_kwh'
+                  AND g.cost_per_unit_night IS NOT NULL
+                  AND g.cost_per_unit IS NOT NULL THEN
+               COALESCE(g.session_fee, 0) +
+               COALESCE(
+                 GREATEST(c.charge_energy_used, c.charge_energy_added) *
+                 (g.cost_per_unit_night * ns.night_share +
+                  g.cost_per_unit * (1 - ns.night_share)), 0)
              WHEN g.billing_type = 'per_kwh' THEN
                COALESCE(g.session_fee, 0) +
                COALESCE(g.cost_per_unit * GREATEST(c.charge_energy_used, c.charge_energy_added), 0)
              WHEN g.billing_type = 'per_minute' THEN
                COALESCE(g.session_fee, 0) +
                COALESCE(g.cost_per_unit * c.duration_min, 0)
-        END
+        END AS cost
       FROM charging_processes c
       JOIN geofences g ON g.id = c.geofence_id
-      WHERE cp.id = c.id
-    )
-    WHERE cp.geofence_id = $1 AND cp.cost IS NULL;
+      LEFT JOIN LATERAL (
+        SELECT
+          CASE
+            WHEN COALESCE(SUM(d.de), 0) > 0
+              THEN COALESCE(SUM(d.de) FILTER (WHERE d.is_night), 0) / SUM(d.de)
+            WHEN COUNT(*) > 0
+              THEN COUNT(*) FILTER (WHERE d.is_night)::numeric / COUNT(*)
+            ELSE 0
+          END AS night_share
+        FROM (
+          SELECT
+            GREATEST(ch.charge_energy_added
+                     - LAG(ch.charge_energy_added) OVER (ORDER BY ch.date), 0) AS de,
+            MOD(EXTRACT(hour FROM ch.date)::int - g.night_start_utc + 24, 24)
+              < MOD(g.night_end_utc - g.night_start_utc + 24, 24) AS is_night
+          FROM charges ch
+          WHERE ch.charging_process_id = c.id
+        ) d
+      ) ns ON TRUE
+      WHERE c.geofence_id = $1 AND c.cost IS NULL
+    ) sub
+    WHERE cp.id = sub.id;
     """
 
     with {:ok, %Postgrex.Result{num_rows: _}} <- Repo.query(query, [id]) do

@@ -139,7 +139,8 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
   def handle_event("toggle_select_all", _, socket) do
     visible = visible_geofences(socket.assigns) |> Enum.map(& &1.id) |> MapSet.new()
 
-    all_selected? = MapSet.subset?(visible, socket.assigns.selected_ids) and MapSet.size(visible) > 0
+    all_selected? =
+      MapSet.subset?(visible, socket.assigns.selected_ids) and MapSet.size(visible) > 0
 
     new_sel = if all_selected?, do: MapSet.new(), else: visible
     {:noreply, assign(socket, selected_ids: new_sel)}
@@ -155,7 +156,8 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
       end
     end)
 
-    geofences = Enum.reject(socket.assigns.geofences, &MapSet.member?(socket.assigns.selected_ids, &1.id))
+    geofences =
+      Enum.reject(socket.assigns.geofences, &MapSet.member?(socket.assigns.selected_ids, &1.id))
 
     {:noreply,
      assign(socket,
@@ -181,6 +183,9 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
           radius: g.radius,
           billing_type: g.billing_type,
           cost_per_unit: g.cost_per_unit && Decimal.to_float(g.cost_per_unit),
+          cost_per_unit_night: g.cost_per_unit_night && Decimal.to_float(g.cost_per_unit_night),
+          night_start_utc: g.night_start_utc,
+          night_end_utc: g.night_end_utc,
           session_fee: g.session_fee && Decimal.to_float(g.session_fee)
         }
       end)
@@ -248,6 +253,9 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
       "radius" => attrs["radius"],
       "billing_type" => attrs["billing_type"] || "per_kwh",
       "cost_per_unit" => attrs["cost_per_unit"],
+      "cost_per_unit_night" => attrs["cost_per_unit_night"],
+      "night_start_utc" => attrs["night_start_utc"],
+      "night_end_utc" => attrs["night_end_utc"],
       "session_fee" => attrs["session_fee"]
     }
 
@@ -308,6 +316,15 @@ defmodule TeslaMateWeb.GeoFenceLive.Index do
 
   def format_cost(%{cost_per_unit: nil, session_fee: fee}) when not is_nil(fee),
     do: "€#{fmt(fee, 2)} / session"
+
+  def format_cost(%{
+        billing_type: :per_kwh,
+        cost_per_unit: c,
+        cost_per_unit_night: n,
+        session_fee: fee
+      })
+      when not is_nil(n),
+      do: "€#{fmt(c, 4)} day / €#{fmt(n, 4)} night / kWh#{session_suffix(fee)}"
 
   def format_cost(%{billing_type: :per_kwh, cost_per_unit: c, session_fee: fee}),
     do: "€#{fmt(c, 4)} / kWh#{session_suffix(fee)}"

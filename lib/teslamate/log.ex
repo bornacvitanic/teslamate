@@ -514,6 +514,73 @@ defmodule TeslaMate.Log do
     |> Repo.update()
   end
 
+  # Share of a session's energy that falls inside the geofence's night window.
+  #
+  # Weighted by actual energy using the same integration as `calculate_energy_used/1`,
+  # so a session whose charging power tapers as SoC rises is split correctly rather
+  # than by elapsed time. Falls back to the share of samples when no energy could be
+  # integrated (e.g. sessions with no phase/voltage data), and to 0 (all day, the more
+  # expensive tariff) when the session has no usable rows at all.
+  #
+  # The window is compared in UTC, matching `charges.date`. The MOD arithmetic handles
+  # windows that wrap past midnight (the usual case, e.g. 20:00-06:00) as well as ones
+  # that do not.
+  defp night_share(%ChargingProcess{id: id} = charging_process, night_start, night_end) do
+    phases = determine_phases(charging_process)
+
+    per_row =
+      from c in Charge,
+        select: %{
+          is_night:
+            fragment(
+              "MOD(EXTRACT(hour FROM ?)::int - ? + 24, 24) < MOD(? - ? + 24, 24)",
+              c.date,
+              type(^night_start, :integer),
+              type(^night_end, :integer),
+              type(^night_start, :integer)
+            ),
+          energy_used:
+            c_if is_nil(c.charger_phases) do
+              c.charger_power
+            else
+              c.charger_actual_current * c.charger_voltage * type(^phases, :float) / 1000.0
+            end *
+              fragment(
+                "EXTRACT(epoch FROM (?))",
+                c.date - (lag(c.date) |> over(order_by: c.date))
+              ) / 3600
+        },
+        where: c.charging_process_id == ^id
+
+    totals =
+      Repo.one(
+        from e in subquery(per_row),
+          select: %{
+            energy_total: sum(e.energy_used) |> type(:decimal),
+            energy_night:
+              sum(fragment("CASE WHEN ? THEN ? ELSE 0 END", e.is_night, e.energy_used))
+              |> type(:decimal),
+            rows_total: count(),
+            rows_night: sum(fragment("CASE WHEN ? THEN 1 ELSE 0 END", e.is_night))
+          },
+          where: e.energy_used >= 0
+      )
+
+    cond do
+      is_nil(totals) ->
+        Decimal.new(0)
+
+      match?(%Decimal{}, totals.energy_total) and Decimal.positive?(totals.energy_total) ->
+        Decimal.div(totals.energy_night || Decimal.new(0), totals.energy_total)
+
+      is_integer(totals.rows_total) and totals.rows_total > 0 ->
+        Decimal.div(Decimal.new(totals.rows_night || 0), Decimal.new(totals.rows_total))
+
+      true ->
+        Decimal.new(0)
+    end
+  end
+
   defp calculate_energy_used(%ChargingProcess{id: id} = charging_process) do
     phases = determine_phases(charging_process)
 
@@ -587,6 +654,37 @@ defmodule TeslaMate.Log do
         {%{fast_charger_type: "Tesla" <> _},
          %CP{car: %Car{settings: %CarSettings{free_supercharging: true}}}} ->
           0.0
+
+        {%{charge_energy_used: kwh_used, charge_energy_added: kwh_added},
+         %CP{
+           geofence: %GeoFence{
+             billing_type: :per_kwh,
+             cost_per_unit: day_rate,
+             cost_per_unit_night: night_rate,
+             night_start_utc: night_start,
+             night_end_utc: night_end,
+             session_fee: session_fee
+           }
+         }}
+        when not is_nil(night_rate) and not is_nil(day_rate) ->
+          if match?(%Decimal{}, kwh_used) or match?(%Decimal{}, kwh_added) do
+            total =
+              [kwh_added, kwh_used]
+              |> Enum.reject(&is_nil/1)
+              |> Enum.max(Decimal)
+
+            night_kwh =
+              charging_process
+              |> night_share(night_start, night_end)
+              |> Decimal.mult(total)
+
+            cost =
+              night_kwh
+              |> Decimal.mult(night_rate)
+              |> Decimal.add(Decimal.mult(Decimal.sub(total, night_kwh), day_rate))
+
+            Decimal.add(session_fee || 0, cost)
+          end
 
         {%{charge_energy_used: kwh_used, charge_energy_added: kwh_added},
          %CP{
