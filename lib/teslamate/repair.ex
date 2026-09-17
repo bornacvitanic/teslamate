@@ -4,9 +4,14 @@ defmodule TeslaMate.Repair do
   require Logger
   import Ecto.Query
 
-  alias TeslaMate.Log.{Drive, Position, ChargingProcess}
+  alias TeslaMate.Log.{Drive, Position, ChargingProcess, Charge}
   alias TeslaMate.Locations.Address
-  alias TeslaMate.{Repo, Locations}
+  alias TeslaMate.{Repo, Locations, Log}
+
+  # How quiet a charging process must go before it is considered abandoned. An active
+  # charge writes a `charges` row every few seconds, so this cannot truncate one that is
+  # still running; it only has to outlast the gap a restart leaves behind.
+  @stale_after :timer.minutes(30)
 
   defmodule State do
     defstruct [:limit]
@@ -20,6 +25,58 @@ defmodule TeslaMate.Repair do
 
   def trigger_run do
     GenServer.cast(__MODULE__, :repair)
+  end
+
+  @doc """
+  Completes charging processes that were abandoned mid-charge.
+
+  `Log.complete_charging_process/1` runs only from the live state machine, so a crash or
+  power cut while charging leaves the row with a NULL `end_date` and no energy, battery
+  levels or cost — permanently, because nothing revisits it. (Open `states` rows are
+  resumed on boot; charging processes had no equivalent.)
+
+  Everything needed to finish the row survives in `charges`, so the repair is simply to
+  call `complete_charging_process/1`, which recomputes from those rows exactly as it would
+  have at the time.
+
+  Two guards keep this safe:
+
+    * a process is only closed once it has gone quiet for `:stale_after` (default 30
+      minutes), so a charge still in progress is never truncated;
+    * processes with no `charges` rows at all are skipped. There is nothing to rebuild
+      from, and `complete_charging_process/1` would fall back to stamping `end_date` with
+      the current time — turning a months-old orphan into a months-long session.
+  """
+  def close_orphaned_charging_processes(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 250)
+
+    cutoff =
+      DateTime.add(
+        DateTime.utc_now(),
+        -Keyword.get(opts, :stale_after, @stale_after),
+        :millisecond
+      )
+
+    any_charges =
+      from ch in Charge,
+        where: ch.charging_process_id == parent_as(:cproc).id,
+        select: 1
+
+    recent_charges =
+      from ch in Charge,
+        where: ch.charging_process_id == parent_as(:cproc).id and ch.date > ^cutoff,
+        select: 1
+
+    from(c in ChargingProcess,
+      as: :cproc,
+      where: is_nil(c.end_date),
+      where: exists(any_charges),
+      where: not exists(recent_charges),
+      order_by: [asc: c.start_date],
+      limit: ^limit
+    )
+    |> Repo.all()
+    |> close_orphans()
   end
 
   @impl true
@@ -69,6 +126,8 @@ defmodule TeslaMate.Repair do
     |> Repo.all()
     |> repair()
 
+    close_orphaned_charging_processes(limit: limit)
+
     {:noreply, state}
   end
 
@@ -84,6 +143,19 @@ defmodule TeslaMate.Repair do
   end
 
   # Private
+
+  defp close_orphans([]), do: :ok
+
+  defp close_orphans([%ChargingProcess{} = cproc | rest]) do
+    Logger.info("Completing abandoned charging process ##{cproc.id} ...")
+
+    case Log.complete_charging_process(cproc) do
+      {:ok, _cproc} -> Logger.info("OK")
+      {:error, reason} -> Logger.warning("Failure: #{inspect(reason, pretty: true)}")
+    end
+
+    close_orphans(rest)
+  end
 
   defp repair([]), do: :ok
 
